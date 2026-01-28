@@ -40,7 +40,7 @@ $tokensList = $stmt->fetchAll();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="../media/Logo%20Orch-Vote.png">
-    <title>Admin E-Voting IPM Tangsel</title>
+    <title>Admin Dashboard - Orch-Vote</title>
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -49,13 +49,13 @@ $tokensList = $stmt->fetchAll();
     <header>
         <div class="container nav-wrapper">
             <div class="logo">
-                <i class="fas fa-vote-yea"></i> Admin E-Voting<span>IPM Tangsel</span>
+                <i class="fas fa-vote-yea"></i>Orch-Vote<span>Admin Dashboard</span>
             </div>
             <nav>
                 <ul>
                     <li><a href="../index.php">Login Voter</a></li>
                     <li><a href="../result.php?org_id=<?= $adminId ?>">Live Count</a></li>
-                    <li><a href="#" class="active">Dashboard</a></li>
+                    <li><a href="#" class="active">Admin Dashboard</a></li>
                     <li><a href="logout.php" style="color: #ef4444;"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                 </ul>
             </nav>
@@ -64,7 +64,7 @@ $tokensList = $stmt->fetchAll();
 
     <main class="container">
         <h1 class="mb-4" style="margin-top: 2rem;">
-            Dashboard Admin <span style="font-weight: 300; font-size: 0.8em; color: #6b7280;">/ <?= htmlspecialchars($currentAdmin['organization_name']) ?></span>
+            Admin Dashboard <span style="font-weight: 300; font-size: 0.8em; color: #6b7280;">/ <?= htmlspecialchars($currentAdmin['organization_name']) ?></span>
         </h1>
 
         <!-- Stats -->

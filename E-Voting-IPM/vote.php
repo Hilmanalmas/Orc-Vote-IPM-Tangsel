@@ -25,7 +25,7 @@ $orgName = $stmt->fetchColumn();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="media/Logo%20Orch-Vote.png">
-    <title>Voting IPM Tangsel</title>
+    <title>Voting - Orch-Vote</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -34,7 +34,7 @@ $orgName = $stmt->fetchColumn();
     <header>
         <div class="container nav-wrapper">
             <div class="logo">
-                <i class="fas fa-vote-yea"></i> E-Voting<span><?= htmlspecialchars($orgName) ?></span>
+                <i class="fas fa-vote-yea"></i> Orch-Vote<span><?= htmlspecialchars($orgName) ?></span>
             </div>
             <div style="color: white; font-weight: 500;">
                 Halo, Voter

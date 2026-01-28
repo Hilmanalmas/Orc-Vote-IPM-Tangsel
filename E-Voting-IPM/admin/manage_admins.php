@@ -13,7 +13,7 @@ $adminsList = $pdo->query("SELECT * FROM admins ORDER BY created_at DESC")->fetc
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="../media/Logo%20Orch-Vote.png">
-    <title>Kelola Admin - E-Voting IPM</title>
+    <title>Admin Account Manager - Orch-Vote</title>
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -21,12 +21,12 @@ $adminsList = $pdo->query("SELECT * FROM admins ORDER BY created_at DESC")->fetc
     <header>
         <div class="container nav-wrapper">
             <div class="logo">
-                <i class="fas fa-vote-yea"></i> Admin E-Voting<span>IPM Tangsel</span>
+                <i class="fas fa-vote-yea"></i>Orch-Vote<span>Admin Account Manager</span>
             </div>
             <nav>
                 <ul>
-                    <li><a href="index.php">Dashboard</a></li>
-                    <li><a href="#" class="active">Kelola Akun</a></li>
+                    <li><a href="index.php">Admin Dashboard</a></li>
+                    <li><a href="#" class="active">Admin Account Manager</a></li>
                 </ul>
             </nav>
         </div>

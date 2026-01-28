@@ -44,7 +44,7 @@ $leader = $results[0] ?? null;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="media/Logo%20Orch-Vote.png">
-    <title>Result - E-Voting IPM Tangsel</title>
+    <title>Live Count - Orch-Vote</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -54,11 +54,11 @@ $leader = $results[0] ?? null;
     <header>
         <div class="container nav-wrapper">
             <div class="logo">
-                <i class="fas fa-chart-bar"></i> Hasil E-Voting<span><?= htmlspecialchars($orgData['organization_name']) ?></span>
+                <i class="fas fa-chart-bar"></i> Orch-Vote Result<span><?= htmlspecialchars($orgData['organization_name']) ?></span>
             </div>
             <nav>
                 <ul>
-                    <li><a href="admin/index.php">Admin</a></li>
+                    <li><a href="admin/index.php">Admin Dashboard</a></li>
                     <li><a href="#" class="active">Live Count</a></li>
                 </ul>
             </nav>
