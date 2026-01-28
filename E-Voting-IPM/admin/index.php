@@ -1,12 +1,37 @@
 <?php
 require_once '../config.php';
 
+// Auth Check
+if (!isset($_SESSION['admin_id'])) {
+    header("Location: login.php");
+    exit;
+}
+
 // Fetch Data
-$settings = getSettings($pdo);
-$candidates = $pdo->query("SELECT * FROM candidates ORDER BY id DESC")->fetchAll();
-$tokensCount = $pdo->query("SELECT COUNT(*) FROM tokens")->fetchColumn();
-$votesCount = $pdo->query("SELECT COUNT(*) FROM votes")->fetchColumn();
-$tokensList = $pdo->query("SELECT * FROM tokens ORDER BY id DESC LIMIT 50")->fetchAll();
+$adminId = $_SESSION['admin_id'];
+
+// Get Current Admin Info
+$stmt = $pdo->prepare("SELECT * FROM admins WHERE id = ?");
+$stmt->execute([$adminId]);
+$currentAdmin = $stmt->fetch();
+
+$settings = getSettings($pdo, $adminId);
+
+$stmt = $pdo->prepare("SELECT * FROM candidates WHERE admin_id = ? ORDER BY id DESC");
+$stmt->execute([$adminId]);
+$candidates = $stmt->fetchAll();
+
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM tokens WHERE admin_id = ?");
+$stmt->execute([$adminId]);
+$tokensCount = $stmt->fetchColumn();
+
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM votes WHERE admin_id = ?");
+$stmt->execute([$adminId]);
+$votesCount = $stmt->fetchColumn();
+
+$stmt = $pdo->prepare("SELECT * FROM tokens WHERE admin_id = ? ORDER BY id DESC LIMIT 50");
+$stmt->execute([$adminId]);
+$tokensList = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -14,6 +39,7 @@ $tokensList = $pdo->query("SELECT * FROM tokens ORDER BY id DESC LIMIT 50")->fet
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../media/Logo%20Orch-Vote.png">
     <title>Admin E-Voting IPM Tangsel</title>
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -28,15 +54,18 @@ $tokensList = $pdo->query("SELECT * FROM tokens ORDER BY id DESC LIMIT 50")->fet
             <nav>
                 <ul>
                     <li><a href="../index.php">Login Voter</a></li>
-                    <li><a href="../result.php">Live Count</a></li>
-                    <li><a href="#" class="active">Admin</a></li>
+                    <li><a href="../result.php?org_id=<?= $adminId ?>">Live Count</a></li>
+                    <li><a href="#" class="active">Dashboard</a></li>
+                    <li><a href="logout.php" style="color: #ef4444;"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                 </ul>
             </nav>
         </div>
     </header>
 
     <main class="container">
-        <h1 class="mb-4" style="margin-top: 2rem;">Dashboard Admin</h1>
+        <h1 class="mb-4" style="margin-top: 2rem;">
+            Dashboard Admin <span style="font-weight: 300; font-size: 0.8em; color: #6b7280;">/ <?= htmlspecialchars($currentAdmin['organization_name']) ?></span>
+        </h1>
 
         <!-- Stats -->
         <div class="dashboard-grid mb-4">
@@ -44,11 +73,11 @@ $tokensList = $pdo->query("SELECT * FROM tokens ORDER BY id DESC LIMIT 50")->fet
                 <h3>Total Kandidat</h3>
                 <div class="stat-value"><?= count($candidates) ?></div>
             </div>
-            <div class="stat-card" style="background-color: var(--accent-color); color: var(--primary-dark);">
+            <div class="stat-card" style="background-color: var(--accent-color); color: #ffff;">
                 <h3>Total Token</h3>
                 <div class="stat-value"><?= $tokensCount ?></div>
             </div>
-            <div class="stat-card" style="background-color: #3b82f6;">
+            <div class="stat-card" style="background-color: #F4C400;">
                 <h3>Suara Masuk</h3>
                 <div class="stat-value"><?= $votesCount ?></div>
             </div>
@@ -69,9 +98,7 @@ $tokensList = $pdo->query("SELECT * FROM tokens ORDER BY id DESC LIMIT 50")->fet
             </form>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-            <!-- Candidate Management -->
-            <div class="settings-section">
+        <!-- Settings Section -->
                 <h2 class="mb-2"><i class="fas fa-users"></i> Tambah Kandidat</h2>
                 
                 <!-- Input Form (Not a real form submission) -->
@@ -498,6 +525,7 @@ $tokensList = $pdo->query("SELECT * FROM tokens ORDER BY id DESC LIMIT 50")->fet
             }
         });
     </script>
+    <?php $basePath = '../'; include '../footer.php'; ?>
 </body>
 
 </html>

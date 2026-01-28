@@ -1,13 +1,22 @@
 <?php
 require_once 'config.php';
 
-if (!isset($_SESSION['voter_token'])) {
+if (!isset($_SESSION['voter_token']) || !isset($_SESSION['org_id'])) {
     header("Location: index.php");
     exit;
 }
 
-$settings = getSettings($pdo);
-$candidates = $pdo->query("SELECT * FROM candidates ORDER BY id ASC")->fetchAll();
+$orgId = $_SESSION['org_id'];
+$settings = getSettings($pdo, $orgId);
+
+$stmt = $pdo->prepare("SELECT * FROM candidates WHERE admin_id = ? ORDER BY id ASC");
+$stmt->execute([$orgId]);
+$candidates = $stmt->fetchAll();
+
+// Get Org Name for Display
+$stmt = $pdo->prepare("SELECT organization_name FROM admins WHERE id = ?");
+$stmt->execute([$orgId]);
+$orgName = $stmt->fetchColumn();
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -15,6 +24,7 @@ $candidates = $pdo->query("SELECT * FROM candidates ORDER BY id ASC")->fetchAll(
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="media/Logo%20Orch-Vote.png">
     <title>Voting IPM Tangsel</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -24,7 +34,7 @@ $candidates = $pdo->query("SELECT * FROM candidates ORDER BY id ASC")->fetchAll(
     <header>
         <div class="container nav-wrapper">
             <div class="logo">
-                <i class="fas fa-vote-yea"></i> E-Voting<span>IPM Tangsel</span>
+                <i class="fas fa-vote-yea"></i> E-Voting<span><?= htmlspecialchars($orgName) ?></span>
             </div>
             <div style="color: white; font-weight: 500;">
                 Halo, Voter
@@ -36,7 +46,7 @@ $candidates = $pdo->query("SELECT * FROM candidates ORDER BY id ASC")->fetchAll(
         <div class="text-center mb-4" style="margin-top: 2rem;">
             <h1>Pilih Kandidat Anda</h1>
             <p style="color: #6b7280;">Silakan pilih
-                <span id="rule-text" style="font-weight: bold; color: var(--primary-color);">
+                <span id="rule-text" style="font-weight: bold; color: #f59e0b;">
                     <?= $settings['min_vote'] == $settings['max_vote'] ? $settings['min_vote'] : $settings['min_vote'] . ' hingga ' . $settings['max_vote'] ?> kandidat
                 </span>
             </p>
@@ -63,7 +73,7 @@ $candidates = $pdo->query("SELECT * FROM candidates ORDER BY id ASC")->fetchAll(
     <!-- Floating Submit Button -->
     <div style="position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 1rem; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: center; z-index: 40;">
         <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
-            <div style="font-weight: 600;">Terpilih: <span id="selected-count" style="color: var(--primary-color);">0</span></div>
+            <div style="font-weight: 600;">Terpilih: <span id="selected-count" style="color: #00984B;">0</span></div>
             <button class="btn btn-primary" onclick="submitVote()">Kirim Suara <i class="fas fa-paper-plane" style="margin-left: 0.5rem;"></i></button>
         </div>
     </div>
@@ -71,7 +81,7 @@ $candidates = $pdo->query("SELECT * FROM candidates ORDER BY id ASC")->fetchAll(
     <!-- Confirmation Modal -->
     <div id="confirm-modal" class="modal">
         <div class="modal-content">
-            <div style="color: var(--primary-color); font-size: 3rem; margin-bottom: 1rem;">
+            <div style="color: #00984B; font-size: 3rem; margin-bottom: 1rem;">
                 <i class="fas fa-question-circle"></i>
             </div>
             <h2>Konfirmasi Pilihan</h2>
@@ -116,6 +126,7 @@ $candidates = $pdo->query("SELECT * FROM candidates ORDER BY id ASC")->fetchAll(
             document.getElementById('confirm-modal').classList.add('active');
         }
     </script>
+    <?php $basePath = ''; include 'footer.php'; ?>
 </body>
 
 </html>

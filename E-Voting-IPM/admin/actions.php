@@ -5,31 +5,96 @@ $action = $_GET['action'] ?? '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
+    // Login Action (No Auth Required)
+    if ($action === 'login') {
+        // ... (existing login logic) ...
+        $username = $_POST['username'];
+        $password = $_POST['password'];
+
+        $stmt = $pdo->prepare("SELECT * FROM admins WHERE username = ?");
+        $stmt->execute([$username]);
+        $user = $stmt->fetch();
+
+        if ($user && password_verify($password, $user['password_hash'])) {
+            $_SESSION['admin_id'] = $user['id'];
+            $_SESSION['admin_username'] = $user['username'];
+            header("Location: index.php");
+            exit;
+        } else {
+            header("Location: login.php?error=Username atau Password salah");
+            exit;
+        }
+    }
+
+    // Add New Admin (Public Access)
+    if ($action === 'add_admin') {
+        $username = trim($_POST['username']);
+        $orgName = trim($_POST['organization_name'] ?? 'Organisasi Baru');
+        $password = $_POST['password'];
+        $redirect = $_GET['redirect'] ?? 'index.php';
+
+        // Check if username exists
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM admins WHERE username = ?");
+        $stmt->execute([$username]);
+        if ($stmt->fetchColumn() > 0) {
+            header("Location: $redirect?error=Username sudah ada");
+            exit;
+        }
+
+        $hash = password_hash($password, PASSWORD_DEFAULT);
+        $stmt = $pdo->prepare("INSERT INTO admins (username, password_hash, organization_name) VALUES (?, ?, ?)");
+        $stmt->execute([$username, $hash, $orgName]);
+        
+        // Also create default settings for this new admin
+        $newAdminId = $pdo->lastInsertId();
+        $pdo->prepare("INSERT INTO settings (admin_id, min_vote, max_vote, voting_enabled) VALUES (?, 1, 1, 1)")->execute([$newAdminId]);
+
+        header("Location: $redirect?msg=Admin berhasil ditambahkan");
+        exit;
+    }
+
+    // --- SECURITY CHECK ---
+    // All actions below require login
+    if (!isset($_SESSION['admin_id'])) {
+        http_response_code(403);
+        die("Unauthorized");
+    }
+
+    // add_admin moved up to allow public access
+
     // Batch Add Candidates
     if ($action === 'add_candidates_batch') {
+        $adminId = $_SESSION['admin_id']; // Assumes session check passed below (but this is above check?)
+        // Wait, 'add_candidates_batch' is AFTER security check? 
+        // Let's check the file content flow. The Security Check is around line 50.
+        // But 'add_admin' was moved UP. 
+        // 'add_candidates_batch' is likely BELOW the check.
+        // Yes, verify file content lines.
+        
         $candidates = $_POST['candidates'] ?? [];
         $uploadDir = '../uploads/';
         if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
 
-        $stmt = $pdo->prepare("INSERT INTO candidates (name, photo, vision) VALUES (?, ?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO candidates (admin_id, name, photo, vision) VALUES (?, ?, ?, ?)");
 
         foreach ($candidates as $index => $data) {
             $name = $data['name'];
             $vision = $data['vision'];
             $photoPath = 'https://via.placeholder.com/300x300?text=No+Image';
 
-            // Check if file exists for this index
+            // Check if file exists ... 
             if (isset($_FILES["photos_$index"]) && $_FILES["photos_$index"]["error"] === UPLOAD_ERR_OK) {
+                // ... existing upload logic ...
                 $file = $_FILES["photos_$index"];
                 $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-                $filename = 'candidate_' . time() . '_' . rand(1000, 9999) . '_' . $index . '.' . $ext;
+                $filename = 'candidate_' . $adminId . '_' . time() . '_' . rand(1000, 9999) . '_' . $index . '.' . $ext;
                 
                 if (move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
                     $photoPath = 'uploads/' . $filename;
                 }
             }
 
-            $stmt->execute([$name, $photoPath, $vision]);
+            $stmt->execute([$adminId, $name, $photoPath, $vision]);
         }
         
         // Return JSON for AJAX
@@ -41,16 +106,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Generate Tokens
     if ($action === 'generate_tokens') {
         $count = (int)$_POST['count'];
+        $adminId = $_SESSION['admin_id'];
         $charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+        $stmt = $pdo->prepare("INSERT IGNORE INTO tokens (admin_id, code) VALUES (?, ?)");
 
         for ($i = 0; $i < $count; $i++) {
             $token = '';
             for ($j = 0; $j < 6; $j++) {
                 $token .= $charset[rand(0, strlen($charset) - 1)];
             }
-            // Insert ignore ensures duplicates are skipped/handled (or handle error)
-            $stmt = $pdo->prepare("INSERT IGNORE INTO tokens (code) VALUES (?)");
-            $stmt->execute([$token]);
+            $stmt->execute([$adminId, $token]);
         }
         header("Location: index.php");
         exit;
@@ -108,32 +174,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'update_settings') {
         $min = (int)$_POST['min_vote'];
         $max = (int)$_POST['max_vote'];
+        $adminId = $_SESSION['admin_id'];
 
-        $stmt = $pdo->prepare("UPDATE settings SET min_vote = ?, max_vote = ? WHERE id = 1");
-        $stmt->execute([$min, $max]);
+        // Check if settings exist
+        $check = $pdo->prepare("SELECT id FROM settings WHERE admin_id = ?");
+        $check->execute([$adminId]);
+        
+        if ($check->rowCount() > 0) {
+             $stmt = $pdo->prepare("UPDATE settings SET min_vote = ?, max_vote = ? WHERE admin_id = ?");
+             $stmt->execute([$min, $max, $adminId]);
+        } else {
+             $stmt = $pdo->prepare("INSERT INTO settings (admin_id, min_vote, max_vote) VALUES (?, ?, ?)");
+             $stmt->execute([$adminId, $min, $max]);
+        }
+
         header("Location: index.php");
         exit;
     }
 
-    // Resets
+    // Resets (Scoped to Admin)
     if ($action === 'reset_candidates') {
-        $pdo->query("SET FOREIGN_KEY_CHECKS = 0");
-        $pdo->query("TRUNCATE TABLE candidates");
-        $pdo->query("TRUNCATE TABLE votes");
-        $pdo->query("SET FOREIGN_KEY_CHECKS = 1");
+        $adminId = $_SESSION['admin_id'];
+        $stmt = $pdo->prepare("DELETE FROM candidates WHERE admin_id = ?");
+        $stmt->execute([$adminId]);
         header("Location: index.php");
         exit;
     }
 
     if ($action === 'reset_tokens') {
-        $pdo->query("SET FOREIGN_KEY_CHECKS = 0");
-        $pdo->query("TRUNCATE TABLE tokens");
-        $pdo->query("TRUNCATE TABLE votes"); // Votes depend on tokens usually
-        $pdo->query("SET FOREIGN_KEY_CHECKS = 1");
+        $adminId = $_SESSION['admin_id'];
+        $stmt = $pdo->prepare("DELETE FROM tokens WHERE admin_id = ?");
+        $stmt->execute([$adminId]);
+        // Also delete votes for this admin? Yes.
+        $stmt = $pdo->prepare("DELETE FROM votes WHERE admin_id = ?");
+        $stmt->execute([$adminId]);
         header("Location: index.php");
         exit;
     }
 
+    if ($action === 'reset_votes') {
+        $adminId = $_SESSION['admin_id'];
+        $stmt = $pdo->prepare("DELETE FROM votes WHERE admin_id = ?");
+        $stmt->execute([$adminId]);
+        $stmt = $pdo->prepare("UPDATE tokens SET is_used = 0 WHERE admin_id = ?");
+        $stmt->execute([$adminId]);
+        header("Location: index.php");
+        exit;
+    }
     if ($action === 'reset_votes') {
         $pdo->query("TRUNCATE TABLE votes");
         $pdo->query("UPDATE tokens SET is_used = 0");
@@ -142,7 +229,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get Request (Delete)
+// Delete Admin (Public Access)
+if ($action === 'delete_admin') {
+    $id = $_GET['id'];
+    $redirect = $_GET['redirect'] ?? 'index.php';
+    
+    // Prevent self-deletion if logged in
+    if (isset($_SESSION['admin_id']) && $id == $_SESSION['admin_id']) {
+        header("Location: $redirect?error=Tidak bisa menghapus akun sendiri");
+        exit;
+    }
+
+    $stmt = $pdo->prepare("DELETE FROM admins WHERE id = ?");
+    $stmt->execute([$id]);
+    header("Location: $redirect?msg=Admin dihapus");
+    exit;
+}
+
+// --- SECURITY CHECK FOR GET REQUESTS ---
+if (!isset($_SESSION['admin_id'])) {
+    header("Location: login.php");
+    exit;
+}
 if ($action === 'delete_candidate') {
     $id = $_GET['id'];
     $stmt = $pdo->prepare("DELETE FROM candidates WHERE id = ?");

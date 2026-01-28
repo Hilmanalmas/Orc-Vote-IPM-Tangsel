@@ -1,8 +1,23 @@
 <?php
 require_once '../config.php';
 
-// Fetch all tokens
-$tokens = $pdo->query("SELECT * FROM tokens ORDER BY id DESC")->fetchAll();
+// Check Session
+if (!isset($_SESSION['admin_id'])) {
+    header("Location: login.php");
+    exit;
+}
+
+$adminId = $_SESSION['admin_id'];
+
+// Get Organization Name
+$stmt = $pdo->prepare("SELECT organization_name FROM admins WHERE id = ?");
+$stmt->execute([$adminId]);
+$orgName = $stmt->fetchColumn();
+
+// Fetch all tokens for THIS admin
+$stmt = $pdo->prepare("SELECT * FROM tokens WHERE admin_id = ? ORDER BY id DESC");
+$stmt->execute([$adminId]);
+$tokens = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -10,7 +25,9 @@ $tokens = $pdo->query("SELECT * FROM tokens ORDER BY id DESC")->fetchAll();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../media/Logo%20Orch-Vote.png">
     <title>Cetak Token - E-Voting IPM Tangsel</title>
+    <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body {
@@ -135,7 +152,7 @@ $tokens = $pdo->query("SELECT * FROM tokens ORDER BY id DESC")->fetchAll();
 <body>
     <div class="header">
         <a href="index.php" class="btn btn-back actions"><i class="fas fa-arrow-left"></i> Kembali</a>
-        <h1>Daftar Token Voting</h1>
+        <h1>Daftar Token Voting - <?= htmlspecialchars($orgName) ?></h1>
         <button onclick="window.print()" class="btn actions"><i class="fas fa-print"></i> Cetak</button>
     </div>
 
@@ -149,6 +166,7 @@ $tokens = $pdo->query("SELECT * FROM tokens ORDER BY id DESC")->fetchAll();
             </div>
         <?php endforeach; ?>
     </div>
+    <?php $basePath = '../'; include '../footer.php'; ?>
 </body>
 
 </html>

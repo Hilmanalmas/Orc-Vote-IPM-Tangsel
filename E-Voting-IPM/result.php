@@ -1,16 +1,36 @@
 <?php
 require_once 'config.php';
 
-// Fetch Candidates and Vote Counts
+// Check Organization ID
+if (!isset($_GET['org_id'])) {
+    // Redirect to Landing Page for selection (or we could duplicate landing logic here)
+    // For consistency, let's assume Landing Page is the entry point
+    header("Location: landing.php");
+    exit;
+}
+
+$orgId = $_GET['org_id'];
+$stmt = $pdo->prepare("SELECT organization_name, id FROM admins WHERE id = ?");
+$stmt->execute([$orgId]);
+$orgData = $stmt->fetch();
+
+if (!$orgData) {
+    die("Organisasi tidak ditemukan. <a href='landing.php'>Kembali</a>");
+}
+
+// Fetch Candidates and Vote Counts for THIS Org
 // Join candidates with vote counts
 $sql = "
     SELECT c.name, c.photo, COUNT(v.id) as vote_count 
     FROM candidates c
     LEFT JOIN votes v ON c.id = v.candidate_id
+    WHERE c.admin_id = :org_id
     GROUP BY c.id
     ORDER BY vote_count DESC, c.name ASC
 ";
-$results = $pdo->query($sql)->fetchAll();
+$stmt = $pdo->prepare($sql);
+$stmt->execute(['org_id' => $orgId]);
+$results = $stmt->fetchAll();
 
 // Prepare data for Chart.js
 $names = array_column($results, 'name');
@@ -23,6 +43,7 @@ $leader = $results[0] ?? null;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="media/Logo%20Orch-Vote.png">
     <title>Result - E-Voting IPM Tangsel</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -33,7 +54,7 @@ $leader = $results[0] ?? null;
     <header>
         <div class="container nav-wrapper">
             <div class="logo">
-                <i class="fas fa-chart-bar"></i> Hasil<span>Voting</span>
+                <i class="fas fa-chart-bar"></i> Hasil E-Voting<span><?= htmlspecialchars($orgData['organization_name']) ?></span>
             </div>
             <nav>
                 <ul>
@@ -193,7 +214,7 @@ $leader = $results[0] ?? null;
     </main>
 
 <?php
-        $settings = getSettings($pdo);
+        $settings = getSettings($pdo, $orgId);
         $maxVote = $settings['max_vote'];
         ?>
     </main>
@@ -394,5 +415,6 @@ $leader = $results[0] ?? null;
             container.innerHTML = html;
         }
     </script>
+    <?php $basePath = ''; include 'footer.php'; ?>
 </body>
 </html>

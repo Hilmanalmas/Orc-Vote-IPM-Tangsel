@@ -1,7 +1,10 @@
 <?php
 require_once 'config.php';
 
-$totalVotes = $pdo->query("SELECT COUNT(*) FROM votes")->fetchColumn();
+$orgId = $_GET['org_id'] ?? 0;
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM votes WHERE admin_id = ?");
+$stmt->execute([$orgId]);
+$totalVotes = $stmt->fetchColumn();
 
 header('Content-Type: application/json');
 echo json_encode(['total_votes' => $totalVotes]);

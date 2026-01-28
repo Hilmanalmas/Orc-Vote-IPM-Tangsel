@@ -18,8 +18,14 @@ try {
 session_start();
 
 // Helper Functions
-function getSettings($pdo) {
-    $stmt = $pdo->query("SELECT * FROM settings WHERE id = 1");
-    return $stmt->fetch();
+function getSettings($pdo, $adminId = null) {
+    if ($adminId) {
+        $stmt = $pdo->prepare("SELECT * FROM settings WHERE admin_id = ?");
+        $stmt->execute([$adminId]);
+        $data = $stmt->fetch();
+        if ($data) return $data;
+    }
+    // Fallback or Default
+    return ['min_vote' => 1, 'max_vote' => 1, 'voting_enabled' => 1];
 }
 ?>
