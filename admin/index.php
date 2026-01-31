@@ -313,13 +313,14 @@ $tokensList = $stmt->fetchAll();
                             if (response.ok) {
                                 window.location.reload();
                             } else {
-                                alert('Terjadi kesalahan saat menyimpan.');
+                                const errorText = await response.text();
+                                alert('Terjadi kesalahan saat menyimpan: ' + errorText);
                                 saveAllBtn.disabled = false;
                                 saveAllBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Semua Kandidat';
                             }
                         } catch (error) {
                             console.error(error);
-                            alert('Gagal menghubungi server.');
+                            alert('Gagal menghubungi server: ' + error.message);
                             saveAllBtn.disabled = false;
                             saveAllBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Semua Kandidat';
                         }

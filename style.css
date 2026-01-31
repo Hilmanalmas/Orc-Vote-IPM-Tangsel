@@ -455,6 +455,7 @@ nav a.active {
   object-fit: contain;
   gap: 0.5rem;
 }
+/* Logo Size */
 
 .logo-pd {
   height: 64px !important;

@@ -64,43 +64,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Batch Add Candidates
     if ($action === 'add_candidates_batch') {
-        $adminId = $_SESSION['admin_id']; // Assumes session check passed below (but this is above check?)
-        // Wait, 'add_candidates_batch' is AFTER security check? 
-        // Let's check the file content flow. The Security Check is around line 50.
-        // But 'add_admin' was moved UP. 
-        // 'add_candidates_batch' is likely BELOW the check.
-        // Yes, verify file content lines.
-        
-        $candidates = $_POST['candidates'] ?? [];
-        $uploadDir = '../uploads/';
-        if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+        try {
+            $adminId = $_SESSION['admin_id'];
 
-        $stmt = $pdo->prepare("INSERT INTO candidates (admin_id, name, photo, vision) VALUES (?, ?, ?, ?)");
+            // Check if POST is empty but Content-Length > 0 (Likely post_max_size exceeded)
+            if (empty($_POST) && empty($_FILES) && isset($_SERVER['CONTENT_LENGTH']) && $_SERVER['CONTENT_LENGTH'] > 0) {
+                throw new Exception("Ukuran file terlalu besar (Melebihi batas server). Kurangi ukuran gambar.");
+            }
 
-        foreach ($candidates as $index => $data) {
-            $name = $data['name'];
-            $vision = $data['vision'];
-            $photoPath = 'https://via.placeholder.com/300x300?text=No+Image';
+            $candidates = $_POST['candidates'] ?? [];
+            if (empty($candidates)) {
+                throw new Exception("Data kandidat kosong.");
+            }
 
-            // Check if file exists ... 
-            if (isset($_FILES["photos_$index"]) && $_FILES["photos_$index"]["error"] === UPLOAD_ERR_OK) {
-                // ... existing upload logic ...
-                $file = $_FILES["photos_$index"];
-                $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-                $filename = 'candidate_' . $adminId . '_' . time() . '_' . rand(1000, 9999) . '_' . $index . '.' . $ext;
-                
-                if (move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
-                    $photoPath = 'uploads/' . $filename;
+            $uploadDir = '../uploads/';
+            if (!is_dir($uploadDir)) {
+                if (!mkdir($uploadDir, 0777, true)) {
+                    throw new Exception("Gagal membuat folder uploads.");
                 }
             }
 
-            $stmt->execute([$adminId, $name, $photoPath, $vision]);
+            $stmt = $pdo->prepare("INSERT INTO candidates (admin_id, name, photo, vision) VALUES (?, ?, ?, ?)");
+
+            foreach ($candidates as $index => $data) {
+                $name = $data['name'];
+                $vision = $data['vision'];
+                $photoPath = 'media/Logo Orch-Vote.png'; // Default if needed, or placeholder
+
+                // Check and Process File
+                if (isset($_FILES["photos_$index"])) {
+                    $file = $_FILES["photos_$index"];
+                    if ($file['error'] === UPLOAD_ERR_OK) {
+                        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+                        if (!in_array(strtolower($ext), ['jpg', 'jpeg', 'png', 'gif'])) {
+                            throw new Exception("Format file tidak valid untuk kandidat: " . htmlspecialchars($name));
+                        }
+                        
+                        $filename = 'candidate_' . $adminId . '_' . time() . '_' . rand(1000, 9999) . '_' . $index . '.' . $ext;
+                        
+                        if (move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
+                            $photoPath = 'uploads/' . $filename;
+                        } else {
+                            throw new Exception("Gagal menyimpan file untuk kandidat: " . htmlspecialchars($name));
+                        }
+                    } else if ($file['error'] !== UPLOAD_ERR_NO_FILE) {
+                         // File upload error
+                         throw new Exception("Upload Error Code " . $file['error'] . " untuk kandidat: " . htmlspecialchars($name));
+                    }
+                }
+
+                $stmt->execute([$adminId, $name, $photoPath, $vision]);
+            }
+            
+            // Return JSON for AJAX
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'success']);
+            exit;
+
+        } catch (Exception $e) {
+            http_response_code(500); 
+            echo $e->getMessage();
+            exit;
         }
-        
-        // Return JSON for AJAX
-        header('Content-Type: application/json');
-        echo json_encode(['status' => 'success']);
-        exit;
     }
 
     // Generate Tokens
