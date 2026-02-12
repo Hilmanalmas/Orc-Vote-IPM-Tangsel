@@ -179,8 +179,9 @@ $tokensList = $stmt->fetchAll();
                     }
 
                     function validateAndPreview(file) {
-                        if (file.size > 2 * 1024 * 1024) {
-                            showError('Ukuran file maks 2MB.'); return;
+                        // Allow up to 10MB since we will compress it
+                        if (file.size > 10 * 1024 * 1024) {
+                            showError('Ukuran file terlalu besar (Max 10MB).'); return;
                         }
                         if (!file.type.startsWith('image/')) {
                             showError('Hanya file gambar.'); return;
@@ -240,7 +241,7 @@ $tokensList = $stmt->fetchAll();
                             id: Date.now(),
                             name: name,
                             vision: vision,
-                            file: currentFile // can be null
+                            file: currentFile // File object (uncompressed)
                         });
 
                         renderQueue();
@@ -287,42 +288,107 @@ $tokensList = $stmt->fetchAll();
                         renderQueue();
                     }
 
-                    // --- Batch Save ---
+                    // --- Image Compression Utility ---
+                    function compressImage(file, maxWidth = 800, quality = 0.7) {
+                        return new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.readAsDataURL(file);
+                            reader.onload = (event) => {
+                                const img = new Image();
+                                img.src = event.target.result;
+                                img.onload = () => {
+                                    const canvas = document.createElement('canvas');
+                                    let width = img.width;
+                                    let height = img.height;
+
+                                    // Maintain aspect ratio
+                                    if (width > maxWidth) {
+                                        height = Math.round((height * maxWidth) / width);
+                                        width = maxWidth;
+                                    }
+
+                                    canvas.width = width;
+                                    canvas.height = height;
+                                    const ctx = canvas.getContext('2d');
+                                    ctx.drawImage(img, 0, 0, width, height);
+
+                                    canvas.toBlob((blob) => {
+                                        if (!blob) {
+                                            reject(new Error('Compression failed'));
+                                            return;
+                                        }
+                                        // Create a new File from the blob
+                                        const newFile = new File([blob], file.name, {
+                                            type: 'image/jpeg',
+                                            lastModified: Date.now(),
+                                        });
+                                        resolve(newFile);
+                                    }, 'image/jpeg', quality);
+                                };
+                                img.onerror = (err) => reject(err);
+                            };
+                            reader.onerror = (err) => reject(err);
+                        });
+                    }
+
+                    // --- Batch Save (Sequential) ---
                     saveAllBtn.addEventListener('click', async () => {
                         if (queue.length === 0) return;
                         
+                        const originalText = saveAllBtn.innerHTML;
                         saveAllBtn.disabled = true;
-                        saveAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
-
-                        const formData = new FormData();
                         
-                        queue.forEach((item, index) => {
-                            formData.append(`candidates[${index}][name]`, item.name);
-                            formData.append(`candidates[${index}][vision]`, item.vision);
+                        let successCount = 0;
+                        let failCount = 0;
+
+                        for (let i = 0; i < queue.length; i++) {
+                            const item = queue[i];
+                            saveAllBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Memproses ${i + 1}/${queue.length}...`;
+
+                            const formData = new FormData();
+                            // Send as single item array to match backend "candidates" structure
+                            formData.append(`candidates[0][name]`, item.name);
+                            formData.append(`candidates[0][vision]`, item.vision);
+
                             if (item.file) {
-                                formData.append(`photos_${index}`, item.file); // Append file with unique key
+                                try {
+                                    // Compress before sending
+                                    const compressedFile = await compressImage(item.file);
+                                    formData.append(`photos_0`, compressedFile);
+                                } catch (err) {
+                                    console.error("Compression failed for", item.name, err);
+                                    // Fallback to original
+                                    formData.append(`photos_0`, item.file);
+                                }
                             }
-                        });
 
-                        try {
-                            const response = await fetch('actions.php?action=add_candidates_batch', {
-                                method: 'POST',
-                                body: formData
-                            });
+                            try {
+                                const response = await fetch('actions.php?action=add_candidates_batch', {
+                                    method: 'POST',
+                                    body: formData
+                                });
 
-                            if (response.ok) {
-                                window.location.reload();
-                            } else {
-                                const errorText = await response.text();
-                                alert('Terjadi kesalahan saat menyimpan: ' + errorText);
-                                saveAllBtn.disabled = false;
-                                saveAllBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Semua Kandidat';
+                                if (response.ok) {
+                                    successCount++;
+                                } else {
+                                    failCount++;
+                                    console.error("Server error for", item.name, await response.text());
+                                }
+                            } catch (error) {
+                                failCount++;
+                                console.error("Network error for", item.name, error);
                             }
-                        } catch (error) {
-                            console.error(error);
-                            alert('Gagal menghubungi server: ' + error.message);
-                            saveAllBtn.disabled = false;
-                            saveAllBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Semua Kandidat';
+                        }
+
+                        saveAllBtn.innerHTML = originalText;
+                        saveAllBtn.disabled = false;
+
+                        if (failCount === 0) {
+                            alert('Semua kandidat berhasil disimpan!');
+                            window.location.reload();
+                        } else {
+                            alert(`Selesai. ${successCount} berhasil, ${failCount} gagal. Cek console.`);
+                            window.location.reload();
                         }
                     });
                 </script>
@@ -471,49 +537,24 @@ $tokensList = $stmt->fetchAll();
                         
                         if (data.photo) {
                             let newSrc = data.photo.startsWith('http') ? data.photo : '../' + data.photo;
-                            card.querySelector('.candidate-img').src = newSrc;
+                            // Cache bust
+                            card.querySelector('.candidate-img').src = newSrc + '?t=' + new Date().getTime();
                         }
 
-                        // Update the onclick data for next edit
-                        // We need to re-construct the candidate object merging old + new
-                        // Simplest way is fetching the current image src if not updated, but
-                        // the 'openEditModal' expects a raw DB object structure (photo path without ../)
-                        // So we should update the button's onclick attribute.
-                        
-                        // NOTE: updating complex onclick attributes in DOM is tricky.
-                        // A better approach is to not pass full object in onclick, but just ID, and fetch data or read from DOM.
-                        // BUT, to keep it consistent with current "openEditModal(json)" pattern:
+                        // Update onclick
+                        // We construct a safe object to pass
+                        const newCand = {
+                             id: data.id,
+                             name: data.name,
+                             vision: data.vision,
+                             photo: data.photo || (card.querySelector('.candidate-img').src.split('?')[0].replace('../', ''))
+                        };
                         
                         const editBtn = card.querySelector('button.btn');
-                        // Get current full object from previous attribute
-                        // This might be hard to parse back from the attribute string safely.
-                        // Alternative: construct new object
-                        
-                        // We will rely on reloading page IF structure is too complex, BUT user asked NO RELOAD.
-                        // So, let's try to update the click handler.
-                        
-                        // Construct updated candidate object
-                        const updatedCandidate = {
-                            id: data.id,
-                            name: data.name,
-                            vision: data.vision,
-                            photo: data.photo ? data.photo : (card.querySelector('.candidate-img').src.replace('../', '')) // Approximation
-                        };
-                         // If we didn't get new photo, we use the old path (we need to know it).
-                         // Actually, the simplest way is to RELOAD the candidate data from specific endpoint or just accept that
-                         // if we re-open edit without reload, we might have issues if we don't update the OnClick.
-                         
-                         // Let's grab the OLD onclick string, parse it? No.
-                         // Let's just update the DOM elements. If user clicks Edit again, 
-                         // we need ensuring the Modal form inputs get the NEW values.
-                         // We are populating inputs from 'candidate' arg in openEditModal.
-                         // If we don't update the onclick, clicking edit again will show OLD data (Name/Vision).
-                         
-                         editBtn.setAttribute('onclick', `openEditModal(${JSON.stringify(updatedCandidate).replace(/"/g, "&quot;")})`);
+                         editBtn.onclick = function() { openEditModal(newCand); };
                     }
 
                     document.getElementById('edit-modal').style.display = 'none';
-                    // Optional: Show toast success
                 } else {
                     alert('Gagal menyimpan perubahan.');
                 }
