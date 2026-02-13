@@ -64,8 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Batch Add Candidates
     if ($action === 'add_candidates_batch') {
-        // Ensure JSON response header for all outcomes in this block
-        header('Content-Type: application/json');
+        // Start output buffering to capture any warnings/notices
+        ob_start();
 
         try {
             $adminId = $_SESSION['admin_id'];
@@ -87,10 +87,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             error_log("Starting batch upload for Admin ID: $adminId. Target Dir: $uploadDir");
 
             if (!is_dir($uploadDir)) {
-                if (!mkdir($uploadDir, 0755, true)) {
+                // Try to create with 0777 to be more permissive in dev environments
+                if (!@mkdir($uploadDir, 0777, true)) {
                     $error = error_get_last();
                     error_log("Failed to create upload dir: " . ($error['message'] ?? 'Unknown error'));
-                    throw new Exception("Gagal membuat folder uploads. Cek permission server.");
+                    throw new Exception("Gagal membuat folder uploads. Cek permission server (chmod 777 uploads).");
                 }
             }
 
@@ -148,11 +149,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$adminId, $name, $photoPath, $vision]);
             }
             
+            // Clean output buffer (remove any warnings) and send JSON
+            ob_end_clean();
+            header('Content-Type: application/json');
             echo json_encode(['status' => 'success']);
             exit;
 
         } catch (Exception $e) {
+            // Clean output buffer to ensure valid JSON error response
+            ob_end_clean();
             http_response_code(500); 
+            header('Content-Type: application/json');
             echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
             exit;
         }
