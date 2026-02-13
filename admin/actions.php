@@ -64,6 +64,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Batch Add Candidates
     if ($action === 'add_candidates_batch') {
+        // Ensure JSON response header for all outcomes in this block
+        header('Content-Type: application/json');
+
         try {
             $adminId = $_SESSION['admin_id'];
 
@@ -77,11 +80,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception("Data kandidat kosong.");
             }
 
-            $uploadDir = '../uploads/';
+            // USE ABSOLUTE PATH to avoid relative path issues in Docker/CLI contexts
+            $uploadDir = __DIR__ . '/../uploads/';
+            
+            // Debug Log
+            error_log("Starting batch upload for Admin ID: $adminId. Target Dir: $uploadDir");
+
             if (!is_dir($uploadDir)) {
-                if (!mkdir($uploadDir, 0777, true)) {
-                    throw new Exception("Gagal membuat folder uploads.");
+                if (!mkdir($uploadDir, 0755, true)) {
+                    $error = error_get_last();
+                    error_log("Failed to create upload dir: " . ($error['message'] ?? 'Unknown error'));
+                    throw new Exception("Gagal membuat folder uploads. Cek permission server.");
                 }
+            }
+
+            if (!is_writable($uploadDir)) {
+                error_log("Upload dir is not writable: $uploadDir");
+                 throw new Exception("Folder uploads tidak dapat ditulis (Permission Denied).");
             }
 
             $stmt = $pdo->prepare("INSERT INTO candidates (admin_id, name, photo, vision) VALUES (?, ?, ?, ?)");
@@ -89,41 +104,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             foreach ($candidates as $index => $data) {
                 $name = $data['name'];
                 $vision = $data['vision'];
-                $photoPath = 'media/Logo Orch-Vote.png'; // Default if needed, or placeholder
+                $photoPath = 'media/Logo Orch-Vote.png'; // Default
 
                 // Check and Process File
                 if (isset($_FILES["photos_$index"])) {
                     $file = $_FILES["photos_$index"];
                     if ($file['error'] === UPLOAD_ERR_OK) {
                         $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-                        if (!in_array(strtolower($ext), ['jpg', 'jpeg', 'png', 'gif'])) {
-                            throw new Exception("Format file tidak valid untuk kandidat: " . htmlspecialchars($name));
+                        $allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                        
+                        if (!in_array(strtolower($ext), $allowedExts)) {
+                            throw new Exception("Format file tidak valid ($ext) untuk kandidat: " . htmlspecialchars($name));
                         }
                         
+                        // Generate unique filename
                         $filename = 'candidate_' . $adminId . '_' . time() . '_' . rand(1000, 9999) . '_' . $index . '.' . $ext;
-                        
-                        if (move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
+                        $targetFilePath = $uploadDir . $filename;
+
+                        if (move_uploaded_file($file['tmp_name'], $targetFilePath)) {
                             $photoPath = 'uploads/' . $filename;
+                            error_log("File uploaded successfully: $targetFilePath");
                         } else {
+                            $error = error_get_last();
+                            error_log("move_uploaded_file failed for $name. Error: " . ($error['message'] ?? 'Unknown'));
                             throw new Exception("Gagal menyimpan file untuk kandidat: " . htmlspecialchars($name));
                         }
                     } else if ($file['error'] !== UPLOAD_ERR_NO_FILE) {
                          // File upload error
-                         throw new Exception("Upload Error Code " . $file['error'] . " untuk kandidat: " . htmlspecialchars($name));
+                         $uploadErrors = [
+                            UPLOAD_ERR_INI_SIZE => 'File too large (php.ini)',
+                            UPLOAD_ERR_FORM_SIZE => 'File too large (HTML form)',
+                            UPLOAD_ERR_PARTIAL => 'File only partially uploaded',
+                            UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
+                            UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+                            UPLOAD_ERR_EXTENSION => 'File upload stopped by extension',
+                         ];
+                         $errorMsg = $uploadErrors[$file['error']] ?? 'Unknown Error';
+                         error_log("Upload error for $name: $errorMsg (Code: {$file['error']})");
+                         throw new Exception("Upload Error: $errorMsg untuk kandidat: " . htmlspecialchars($name));
                     }
                 }
 
                 $stmt->execute([$adminId, $name, $photoPath, $vision]);
             }
             
-            // Return JSON for AJAX
-            header('Content-Type: application/json');
             echo json_encode(['status' => 'success']);
             exit;
 
         } catch (Exception $e) {
             http_response_code(500); 
-            echo $e->getMessage();
+            echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
             exit;
         }
     }

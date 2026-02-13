@@ -10,5 +10,10 @@ RUN apk add --no-cache \
 WORKDIR /var/www/html
 
 COPY . .
+COPY php.ini-production /usr/local/etc/php/conf.d/custom.ini
 
-RUN chown -R www-data:www-data /var/www/html
+RUN mkdir -p /var/www/html/uploads && \
+  mkdir -p /var/www/html/media && \
+  mkdir -p /var/www/html/admin/uploads && \
+  chown -R www-data:www-data /var/www/html && \
+  chmod -R 755 /var/www/html/uploads
