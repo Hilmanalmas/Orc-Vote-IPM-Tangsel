@@ -24,14 +24,21 @@ $orgName = $stmt->fetchColumn();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="<?= htmlspecialchars($settings['logo_path']) ?>">
+    <link rel="icon" type="image/png" href="media/Logo%20Orch-Vote.png">
     <title>Voting - <?= htmlspecialchars($orgName) ?></title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <?php
+        $colors = explode(',', $settings['theme_color']);
+        $primary = $colors[0] ?? '#00984B';
+        $accent = $colors[1] ?? '#E86729';
+        $dark = $colors[2] ?? $primary;
+    ?>
     <style>
         :root {
-            --primary-color: <?= htmlspecialchars($settings['theme_color']) ?>;
-            --primary-dark: <?= htmlspecialchars($settings['theme_color']) ?>;
+            --primary-color: <?= htmlspecialchars($primary) ?>;
+            --accent-color: <?= htmlspecialchars($accent) ?>;
+            --primary-dark: <?= htmlspecialchars($dark) ?>;
         }
     </style>
 </head>
@@ -40,12 +47,7 @@ $orgName = $stmt->fetchColumn();
     <header>
         <div class="container nav-wrapper">
             <div class="logo">
-                <?php if ($settings['logo_path'] !== 'media/Logo Orch-Vote.png'): ?>
-                    <img src="<?= htmlspecialchars($settings['logo_path']) ?>" alt="Logo" style="height: 48px; width: auto;">
-                <?php else: ?>
-                    <i class="fas fa-vote-yea"></i>
-                <?php endif; ?>
-                Orch-Vote<span><?= htmlspecialchars($orgName) ?></span>
+                <i class="fas fa-vote-yea"></i> Orch-Vote<span><?= htmlspecialchars($orgName) ?></span>
             </div>
             <div style="color: var(--text-color); font-weight: 500;">
                 Halo, Voter

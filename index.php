@@ -49,14 +49,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="<?= htmlspecialchars($settings['logo_path']) ?>">
+    <link rel="icon" type="image/png" href="media/Logo%20Orch-Vote.png">
     <title>Login - <?= htmlspecialchars($orgData['organization_name']) ?></title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <?php
+        $colors = explode(',', $settings['theme_color']);
+        $primary = $colors[0] ?? '#00984B';
+        $accent = $colors[1] ?? '#E86729';
+        $dark = $colors[2] ?? $primary;
+    ?>
     <style>
         :root {
-            --primary-color: <?= htmlspecialchars($settings['theme_color']) ?>;
-            --primary-dark: <?= htmlspecialchars($settings['theme_color']) ?>;
+            --primary-color: <?= htmlspecialchars($primary) ?>;
+            --accent-color: <?= htmlspecialchars($accent) ?>;
+            --primary-dark: <?= htmlspecialchars($dark) ?>;
         }
     </style>
 </head>
@@ -65,11 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="auth-container">
         <div class="card">
             <div class="logo" style="justify-content: center; margin-bottom: 2rem; color: var(--primary-color);">
-                <?php if ($settings['logo_path'] !== 'media/Logo Orch-Vote.png'): ?>
-                    <img src="<?= htmlspecialchars($settings['logo_path']) ?>" alt="Logo" style="height: 80px; width: auto;">
-                <?php else: ?>
-                    <i class="fas fa-vote-yea" style="font-size: 2.5rem;"></i>
-                <?php endif; ?>
+                <i class="fas fa-vote-yea" style="font-size: 2.5rem;"></i>
             </div>
             <h1 class="mb-2">Selamat Datang</h1>
             <h3 class="mb-4" style="color: #00984B; text-align: center;"><?= htmlspecialchars($orgData['organization_name']) ?></h3>

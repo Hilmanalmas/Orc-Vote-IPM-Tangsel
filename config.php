@@ -25,8 +25,8 @@ function getSettings($pdo, $adminId = null) {
         $data = $stmt->fetch();
         if ($data) {
             // Provide defaults if null
-            $data['logo_path'] = $data['logo_path'] ?? 'media/Logo Orch-Vote.png';
-            $data['theme_color'] = $data['theme_color'] ?? '#00984B';
+            $data['logo_path'] = $data['logo_path'] ?? 'media/Logo_PD_IPM.png';
+            $data['theme_color'] = $data['theme_color'] ?? '#00984B,#E86729,#00743F';
             return $data;
         }
     }
@@ -35,8 +35,8 @@ function getSettings($pdo, $adminId = null) {
         'min_vote' => 1, 
         'max_vote' => 1, 
         'voting_enabled' => 1,
-        'logo_path' => 'media/Logo Orch-Vote.png',
-        'theme_color' => '#00984B'
+        'logo_path' => 'media/Logo_PD_IPM.png',
+        'theme_color' => '#00984B,#E86729,#00743F'
     ];
 }
 ?>
