@@ -251,10 +251,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($file['size'] <= $maxSize && in_array($file['type'], $allowedTypes)) {
                 $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
                 $filename = 'logo_' . $adminId . '_' . time() . '.' . $ext;
-                $uploadDir = '../uploads/logos/';
+                $uploadDir = __DIR__ . '/../uploads/logos/';
                 
                 if (!is_dir($uploadDir)) {
-                    @mkdir($uploadDir, 0777, true);
+                    if (!mkdir($uploadDir, 0777, true)) {
+                        die("Error: Tidak dapat membuat direktori uploads. Pastikan folder server memiliki izin tulis (write permission).");
+                    }
                 }
 
                 if (move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
