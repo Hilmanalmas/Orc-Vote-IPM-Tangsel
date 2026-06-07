@@ -236,18 +236,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'update_settings') {
         $min = (int)$_POST['min_vote'];
         $max = (int)$_POST['max_vote'];
+        $theme_color = $_POST['theme_color'] ?? '#00984B';
         $adminId = $_SESSION['admin_id'];
+
+        $logoPathUpdate = "";
+        $paramsUpdate = [$min, $max, $theme_color, $adminId];
+        $paramsInsert = [$adminId, $min, $max, $theme_color];
+
+        if (isset($_FILES['org_logo']) && $_FILES['org_logo']['error'] === UPLOAD_ERR_OK) {
+            $file = $_FILES['org_logo'];
+            $maxSize = 5 * 1024 * 1024; // 5MB
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+
+            if ($file['size'] <= $maxSize && in_array($file['type'], $allowedTypes)) {
+                $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+                $filename = 'logo_' . $adminId . '_' . time() . '.' . $ext;
+                $uploadDir = '../uploads/logos/';
+                
+                if (!is_dir($uploadDir)) {
+                    @mkdir($uploadDir, 0777, true);
+                }
+
+                if (move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
+                    $logo_path = 'uploads/logos/' . $filename;
+                    $logoPathUpdate = ", logo_path = ?";
+                    
+                    // Modify params for update
+                    $paramsUpdate = [$min, $max, $theme_color, $logo_path, $adminId];
+                    // Modify params for insert
+                    $paramsInsert = [$adminId, $min, $max, $theme_color, $logo_path];
+                }
+            }
+        }
 
         // Check if settings exist
         $check = $pdo->prepare("SELECT id FROM settings WHERE admin_id = ?");
         $check->execute([$adminId]);
         
         if ($check->rowCount() > 0) {
-             $stmt = $pdo->prepare("UPDATE settings SET min_vote = ?, max_vote = ? WHERE admin_id = ?");
-             $stmt->execute([$min, $max, $adminId]);
+             $stmt = $pdo->prepare("UPDATE settings SET min_vote = ?, max_vote = ?, theme_color = ? $logoPathUpdate WHERE admin_id = ?");
+             $stmt->execute($paramsUpdate);
         } else {
-             $stmt = $pdo->prepare("INSERT INTO settings (admin_id, min_vote, max_vote) VALUES (?, ?, ?)");
-             $stmt->execute([$adminId, $min, $max]);
+             $insertCols = "admin_id, min_vote, max_vote, theme_color" . ($logoPathUpdate ? ", logo_path" : "");
+             $insertVals = "?, ?, ?, ?" . ($logoPathUpdate ? ", ?" : "");
+             $stmt = $pdo->prepare("INSERT INTO settings ($insertCols) VALUES ($insertVals)");
+             $stmt->execute($paramsInsert);
         }
 
         header("Location: index.php");

@@ -39,22 +39,33 @@ $tokensList = $stmt->fetchAll();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="../media/Logo%20Orch-Vote.png">
-    <title>Admin Dashboard - Orch-Vote</title>
+    <link rel="icon" type="image/png" href="<?= (strpos($settings['logo_path'], 'http') === 0) ? htmlspecialchars($settings['logo_path']) : '../' . htmlspecialchars($settings['logo_path']) ?>">
+    <title>Admin Dashboard - <?= htmlspecialchars($currentAdmin['organization_name']) ?></title>
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: <?= htmlspecialchars($settings['theme_color']) ?>;
+            --primary-dark: <?= htmlspecialchars($settings['theme_color']) ?>;
+        }
+    </style>
 </head>
 
 <body id="admin-page">
     <header>
         <div class="container nav-wrapper">
             <div class="logo">
-                <i class="fas fa-vote-yea"></i>Orch-Vote<span>Admin Dashboard</span>
+                <?php if ($settings['logo_path'] !== 'media/Logo Orch-Vote.png'): ?>
+                    <img src="<?= (strpos($settings['logo_path'], 'http') === 0) ? htmlspecialchars($settings['logo_path']) : '../' . htmlspecialchars($settings['logo_path']) ?>" alt="Logo" style="height: 48px; width: auto;">
+                <?php else: ?>
+                    <i class="fas fa-vote-yea"></i>
+                <?php endif; ?>
+                Orch-Vote<span>Admin Dashboard</span>
             </div>
             <nav>
                 <ul>
-                    <li><a href="../index.php">Login Voter</a></li>
-                    <li><a href="../result.php?org_id=<?= $adminId ?>">Live Count</a></li>
+                    <li><a href="../index.php?org_id=<?= $adminId ?>" target="_blank">Login Voter</a></li>
+                    <li><a href="../result.php?org_id=<?= $adminId ?>" target="_blank">Live Count</a></li>
                     <li><a href="#" class="active">Admin Dashboard</a></li>
                     <li><a href="logout.php" style="color: #ef4444;"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                 </ul>
@@ -85,18 +96,80 @@ $tokensList = $stmt->fetchAll();
 
         <!-- Settings Section -->
         <div class="settings-section">
-            <h2 class="mb-2"><i class="fas fa-cogs"></i> Pengaturan Voting</h2>
-            <form action="actions.php?action=update_settings" method="POST">
+            <h2 class="mb-2"><i class="fas fa-cogs"></i> Pengaturan Voting & Tema</h2>
+            <form action="actions.php?action=update_settings" method="POST" enctype="multipart/form-data">
                 <div class="input-group">
                     <label>Jumlah Kandidat yang HARUS dipilih:</label>
-                    <div style="display: flex; gap: 1rem;">
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
                         <input type="number" name="min_vote" value="<?= $settings['min_vote'] ?>" min="1" placeholder="Min" style="flex:1;">
                         <input type="number" name="max_vote" value="<?= $settings['max_vote'] ?>" min="1" placeholder="Max" style="flex:1;">
                     </div>
-                    <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Simpan Pengaturan</button>
                 </div>
+                
+                <div class="input-group">
+                    <label>Logo Organisasi</label>
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                        <img id="logo-preview" src="<?= (strpos($settings['logo_path'], 'http') === 0) ? htmlspecialchars($settings['logo_path']) : '../' . htmlspecialchars($settings['logo_path']) ?>" style="height: 60px; width: auto; object-fit: contain; border: 1px solid #ddd; border-radius: 4px; padding: 4px; background: #fff;">
+                        <input type="file" name="org_logo" id="org-logo-input" accept="image/*">
+                    </div>
+                    <p style="font-size: 0.8rem; color: #6b7280;">Upload logo untuk menyesuaikan warna tema secara otomatis.</p>
+                </div>
+
+                <div class="input-group">
+                    <label>Warna Tema Utama</label>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div id="color-preview" style="width: 40px; height: 40px; border-radius: 50%; background-color: <?= htmlspecialchars($settings['theme_color']) ?>; border: 2px solid #e2e8f0;"></div>
+                        <input type="hidden" name="theme_color" id="theme-color-input" value="<?= htmlspecialchars($settings['theme_color']) ?>">
+                        <span id="color-hex-text" style="font-family: monospace; color: #4b5563;"><?= htmlspecialchars($settings['theme_color']) ?></span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="margin-top: 1rem;"><i class="fas fa-save"></i> Simpan Pengaturan</button>
             </form>
         </div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+        <script>
+            const logoInput = document.getElementById('org-logo-input');
+            const logoPreview = document.getElementById('logo-preview');
+            const colorPreview = document.getElementById('color-preview');
+            const colorInput = document.getElementById('theme-color-input');
+            const colorHexText = document.getElementById('color-hex-text');
+            
+            // Helper to convert RGB to HEX
+            const rgbToHex = (r, g, b) => '#' + [r, g, b].map(x => {
+                const hex = x.toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            }).join('');
+
+            logoInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        logoPreview.src = event.target.result;
+                        
+                        // Use ColorThief
+                        const img = new Image();
+                        img.src = event.target.result;
+                        img.onload = function() {
+                            try {
+                                const colorThief = new ColorThief();
+                                const color = colorThief.getColor(img);
+                                const hex = rgbToHex(color[0], color[1], color[2]);
+                                
+                                colorPreview.style.backgroundColor = hex;
+                                colorInput.value = hex;
+                                colorHexText.textContent = hex;
+                            } catch (err) {
+                                console.log("ColorThief failed or image is white/transparent", err);
+                            }
+                        }
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+        </script>
 
         <!-- Settings Section -->
                 <h2 class="mb-2"><i class="fas fa-users"></i> Tambah Kandidat</h2>

@@ -23,9 +23,20 @@ function getSettings($pdo, $adminId = null) {
         $stmt = $pdo->prepare("SELECT * FROM settings WHERE admin_id = ?");
         $stmt->execute([$adminId]);
         $data = $stmt->fetch();
-        if ($data) return $data;
+        if ($data) {
+            // Provide defaults if null
+            $data['logo_path'] = $data['logo_path'] ?? 'media/Logo Orch-Vote.png';
+            $data['theme_color'] = $data['theme_color'] ?? '#00984B';
+            return $data;
+        }
     }
     // Fallback or Default
-    return ['min_vote' => 1, 'max_vote' => 1, 'voting_enabled' => 1];
+    return [
+        'min_vote' => 1, 
+        'max_vote' => 1, 
+        'voting_enabled' => 1,
+        'logo_path' => 'media/Logo Orch-Vote.png',
+        'theme_color' => '#00984B'
+    ];
 }
 ?>

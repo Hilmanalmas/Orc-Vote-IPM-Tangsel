@@ -23,6 +23,8 @@ CREATE TABLE IF NOT EXISTS settings (
     min_vote INT DEFAULT 1,
     max_vote INT DEFAULT 1,
     voting_enabled BOOLEAN DEFAULT TRUE,
+    logo_path VARCHAR(255) DEFAULT NULL,
+    theme_color VARCHAR(50) DEFAULT '#00984B',
     FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
 );
 

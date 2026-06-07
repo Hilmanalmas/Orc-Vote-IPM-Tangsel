@@ -43,18 +43,33 @@ $leader = $results[0] ?? null;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="media/Logo%20Orch-Vote.png">
-    <title>Live Count - Orch-Vote</title>
+    <?php
+    $settings = getSettings($pdo, $orgId);
+    $maxVote = $settings['max_vote'];
+    ?>
+    <link rel="icon" type="image/png" href="<?= htmlspecialchars($settings['logo_path']) ?>">
+    <title>Live Count - <?= htmlspecialchars($orgData['organization_name']) ?></title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: <?= htmlspecialchars($settings['theme_color']) ?>;
+            --primary-dark: <?= htmlspecialchars($settings['theme_color']) ?>;
+        }
+    </style>
 </head>
 
 <body id="result-page">
     <header>
         <div class="container nav-wrapper">
             <div class="logo">
-                <i class="fas fa-chart-bar"></i> Orch-Vote Result<span><?= htmlspecialchars($orgData['organization_name']) ?></span>
+                <?php if ($settings['logo_path'] !== 'media/Logo Orch-Vote.png'): ?>
+                    <img src="<?= htmlspecialchars($settings['logo_path']) ?>" alt="Logo" style="height: 48px; width: auto;">
+                <?php else: ?>
+                    <i class="fas fa-chart-bar"></i>
+                <?php endif; ?>
+                Orch-Vote Result<span><?= htmlspecialchars($orgData['organization_name']) ?></span>
             </div>
             <nav>
                 <ul>
