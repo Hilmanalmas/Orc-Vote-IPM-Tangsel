@@ -3,6 +3,68 @@ require_once '../config.php';
 
 $action = $_GET['action'] ?? '';
 
+// Auto-Compress Image Function
+function autoCompressImage($sourcePath, $destinationPath, $quality = 75, $maxWidth = 800) {
+    if (!function_exists('getimagesize') || !function_exists('imagecreatefromjpeg')) {
+        return move_uploaded_file($sourcePath, $destinationPath); // Fallback if GD not installed
+    }
+    
+    $info = getimagesize($sourcePath);
+    if (!$info) return move_uploaded_file($sourcePath, $destinationPath);
+    
+    $mime = $info['mime'];
+    $width = $info[0];
+    $height = $info[1];
+    
+    if ($width > $maxWidth) {
+        $ratio = $maxWidth / $width;
+        $newWidth = $maxWidth;
+        $newHeight = $height * $ratio;
+    } else {
+        $newWidth = $width;
+        $newHeight = $height;
+    }
+    
+    $imageResized = imagecreatetruecolor($newWidth, $newHeight);
+    
+    if ($mime == 'image/png' || $mime == 'image/webp') {
+        imagealphablending($imageResized, false);
+        imagesavealpha($imageResized, true);
+        $transparent = imagecolorallocatealpha($imageResized, 255, 255, 255, 127);
+        imagefilledrectangle($imageResized, 0, 0, $newWidth, $newHeight, $transparent);
+    }
+    
+    switch ($mime) {
+        case 'image/jpeg': $image = imagecreatefromjpeg($sourcePath); break;
+        case 'image/png': $image = imagecreatefrompng($sourcePath); break;
+        case 'image/webp': $image = imagecreatefromwebp($sourcePath); break;
+        default: return move_uploaded_file($sourcePath, $destinationPath);
+    }
+    
+    if (!$image) return move_uploaded_file($sourcePath, $destinationPath);
+    
+    imagecopyresampled($imageResized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+    
+    $success = false;
+    switch ($mime) {
+        case 'image/jpeg': $success = imagejpeg($imageResized, $destinationPath, $quality); break;
+        case 'image/png': 
+            $pngQuality = 9; 
+            $success = imagepng($imageResized, $destinationPath, $pngQuality); 
+            break;
+        case 'image/webp': $success = imagewebp($imageResized, $destinationPath, $quality); break;
+    }
+    
+    imagedestroy($image);
+    imagedestroy($imageResized);
+    
+    // Fallback if compression somehow fails
+    if (!$success && file_exists($sourcePath)) {
+        return move_uploaded_file($sourcePath, $destinationPath);
+    }
+    return $success;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Login Action (No Auth Required)
@@ -122,12 +184,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $filename = 'candidate_' . $adminId . '_' . time() . '_' . rand(1000, 9999) . '_' . $index . '.' . $ext;
                         $targetFilePath = $uploadDir . $filename;
 
-                        if (move_uploaded_file($file['tmp_name'], $targetFilePath)) {
+                        if (autoCompressImage($file['tmp_name'], $targetFilePath, 70, 800)) {
                             $photoPath = 'uploads/' . $filename;
-                            error_log("File uploaded successfully: $targetFilePath");
+                            error_log("File uploaded and compressed successfully: $targetFilePath");
                         } else {
                             $error = error_get_last();
-                            error_log("move_uploaded_file failed for $name. Error: " . ($error['message'] ?? 'Unknown'));
+                            error_log("autoCompressImage failed for $name. Error: " . ($error['message'] ?? 'Unknown'));
                             throw new Exception("Gagal menyimpan file untuk kandidat: " . htmlspecialchars($name));
                         }
                     } else if ($file['error'] !== UPLOAD_ERR_NO_FILE) {
@@ -259,7 +321,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
 
-                if (move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
+                if (autoCompressImage($file['tmp_name'], $uploadDir . $filename, 80, 400)) {
                     $logo_path = 'uploads/logos/' . $filename;
                     $logoPathUpdate = ", logo_path = ?";
                     
