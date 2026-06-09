@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php
         $colors = explode(',', $settings['theme_color']);
         $primary = $colors[0] ?? '#00984B';
-        $accent = $colors[1] ?? '#E86729';
+        $accent = $colors[1] ?? $primary;
         $dark = $colors[2] ?? $primary;
     ?>
     <style>
@@ -92,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="input-group">
                     <input type="text" name="token" placeholder="Masukkan Token" required autocomplete="off" style="text-align: center; letter-spacing: 2px; text-transform: uppercase; font-size: 1.5rem;">
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">Masuk <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i></button>
+                <button type="submit" class="btn btn-success" style="width: 100%;">Masuk <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i></button>
             </form>
         </div>
     </div>

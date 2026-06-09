@@ -55,7 +55,7 @@ $leader = $results[0] ?? null;
     <?php
         $colors = explode(',', $settings['theme_color']);
         $primary = $colors[0] ?? '#00984B';
-        $accent = $colors[1] ?? '#E86729';
+        $accent = $colors[1] ?? $primary;
         $dark = $colors[2] ?? $primary;
     ?>
     <style>

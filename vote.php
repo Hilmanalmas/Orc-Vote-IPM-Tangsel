@@ -31,7 +31,7 @@ $orgName = $stmt->fetchColumn();
     <?php
         $colors = explode(',', $settings['theme_color']);
         $primary = $colors[0] ?? '#00984B';
-        $accent = $colors[1] ?? '#E86729';
+        $accent = $colors[1] ?? $primary;
         $dark = $colors[2] ?? $primary;
     ?>
     <style>
@@ -92,7 +92,7 @@ $orgName = $stmt->fetchColumn();
     <div style="position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 1rem; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: center; z-index: 40;">
         <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
             <div style="font-weight: 600;">Terpilih: <span id="selected-count" style="color: var(--primary-color);">0</span></div>
-            <button class="btn btn-primary" onclick="submitVote()">Kirim Suara <i class="fas fa-paper-plane" style="margin-left: 0.5rem;"></i></button>
+            <button class="btn btn-success" onclick="submitVote()">Kirim Suara <i class="fas fa-paper-plane" style="margin-left: 0.5rem;"></i></button>
         </div>
     </div>
 

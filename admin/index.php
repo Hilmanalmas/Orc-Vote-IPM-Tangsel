@@ -46,7 +46,7 @@ $tokensList = $stmt->fetchAll();
     <?php
         $colors = explode(',', $settings['theme_color']);
         $primary = $colors[0] ?? '#00984B';
-        $accent = $colors[1] ?? '#E86729';
+        $accent = $colors[1] ?? $primary;
         $dark = $colors[2] ?? $primary;
     ?>
     <style>
@@ -137,7 +137,7 @@ $tokensList = $stmt->fetchAll();
                     <div id="color-hex-text" style="font-family: monospace; color: #4b5563; margin-top: 0.5rem; font-size: 0.85rem;"><?= htmlspecialchars($settings['theme_color']) ?></div>
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="margin-top: 1rem;"><i class="fas fa-save"></i> Simpan Pengaturan</button>
+                <button type="submit" class="btn btn-success" style="margin-top: 1rem;"><i class="fas fa-save"></i> Simpan Pengaturan</button>
             </form>
         </div>
 
@@ -584,7 +584,7 @@ $tokensList = $stmt->fetchAll();
 
                 <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;">
                     <button type="button" class="btn btn-secondary" onclick="document.getElementById('edit-modal').style.display='none'">Batal</button>
-                    <button type="submit" class="btn btn-primary">Save & Exit</button>
+                    <button type="submit" class="btn btn-success">Save & Exit</button>
                 </div>
             </form>
         </div>

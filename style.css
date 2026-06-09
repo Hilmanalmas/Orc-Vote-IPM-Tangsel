@@ -163,6 +163,15 @@ nav a.active {
   background-color: var(--accent-color);
 }
 
+.btn-success {
+  background-color: #00984B;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #00743F;
+}
+
 .btn-danger {
   background-color: #ef4444;
   color: white;
