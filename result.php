@@ -49,7 +49,7 @@ $leader = $results[0] ?? null;
     ?>
     <link rel="icon" type="image/png" href="media/Logo%20Orch-Vote.png">
     <title>Live Count - <?= htmlspecialchars($orgData['organization_name']) ?></title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=<?= time() ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <?php
