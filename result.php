@@ -71,7 +71,12 @@ $leader = $results[0] ?? null;
     <header>
         <div class="container nav-wrapper">
             <div class="logo">
-                <i class="fas fa-chart-bar"></i> Orch-Vote Result<span><?= htmlspecialchars($orgData['organization_name']) ?></span>
+                <?php if ($settings['logo_path'] && $settings['logo_path'] !== 'media/Logo_PD_IPM.png'): ?>
+                    <img src="<?= htmlspecialchars($settings['logo_path']) ?>" alt="Logo" style="height: 48px; width: auto; margin-right: 10px;">
+                <?php else: ?>
+                    <i class="fas fa-chart-bar"></i>
+                <?php endif; ?>
+                Orch-Vote Result<span><?= htmlspecialchars($orgData['organization_name']) ?></span>
             </div>
             <nav>
                 <ul>

@@ -4,8 +4,7 @@
         <!-- Left: Logo & Social -->
         <div class="footer-left">
             <div class="footer-branding">
-                <?php $pdLogoPath = isset($settings['logo_path']) ? $settings['logo_path'] : 'media/Logo_PD_IPM.png'; ?>
-                <img class="logo-pd" src="<?= (strpos($pdLogoPath, 'http') === 0) ? htmlspecialchars($pdLogoPath) : $basePath . htmlspecialchars($pdLogoPath) ?>" alt="Logo">
+                <img class="logo-pd" src="<?= $basePath ?>media/Logo_PD_IPM.png" alt="Logo">
                 <img class="logo-orch" src="<?= $basePath ?>media/Logo%20Orch-Vote.png" alt="Logo">
                 <a href="https://instagram.com/ipmtangsel" target="_blank" class="ig-link">
                     <i class="fab fa-instagram"></i>ipmtangsel
@@ -21,9 +20,7 @@
         <!-- Right: Contact -->
         <div class="footer-right">
             <div class="contact-info">
-                <span><i class="fas fa-phone-alt"></i> Contact Person
-                    <a href="https://wa.me/6285711921089" target="_blank"><i class="fab fa-whatsapp"></i> 0857-1192-1089</a>
-                </span>
+                <a href="https://wa.me/6285711921089" target="_blank"><i class="fab fa-whatsapp"></i> 0857-1192-1089</a>
                 <a href="mailto:pdipmtangsel@gmail.com"><i class="fas fa-envelope"></i> pdipmtangsel@gmail.com</a>
             </div>
         </div>

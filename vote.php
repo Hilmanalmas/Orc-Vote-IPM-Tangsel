@@ -47,7 +47,12 @@ $orgName = $stmt->fetchColumn();
     <header>
         <div class="container nav-wrapper">
             <div class="logo">
-                <i class="fas fa-vote-yea"></i> Orch-Vote<span><?= htmlspecialchars($orgName) ?></span>
+                <?php if ($settings['logo_path'] && $settings['logo_path'] !== 'media/Logo_PD_IPM.png'): ?>
+                    <img src="<?= htmlspecialchars($settings['logo_path']) ?>" alt="Logo" style="height: 48px; width: auto; margin-right: 10px;">
+                <?php else: ?>
+                    <i class="fas fa-vote-yea"></i>
+                <?php endif; ?>
+                Orch-Vote<span><?= htmlspecialchars($orgName) ?></span>
             </div>
             <div style="color: var(--text-color); font-weight: 500;">
                 Halo, Voter
