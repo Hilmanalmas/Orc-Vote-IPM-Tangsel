@@ -87,17 +87,38 @@ $tokensList = $stmt->fetchAll();
 
         <!-- Stats -->
         <div class="dashboard-grid mb-4">
-            <div class="stat-card">
-                <h3>Total Kandidat</h3>
-                <div class="stat-value"><?= count($candidates) ?></div>
+            <div class="stat-card" style="border-left: 4px solid var(--primary-color);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h3>Total Kandidat</h3>
+                        <div class="stat-value" style="color: var(--primary-color);"><?= count($candidates) ?></div>
+                    </div>
+                    <div style="background: rgba(0, 152, 75, 0.1); padding: 0.75rem; border-radius: 12px; color: var(--primary-color);">
+                        <i class="fas fa-users fa-lg"></i>
+                    </div>
+                </div>
             </div>
-            <div class="stat-card" style="background-color: var(--accent-color); color: #ffff;">
-                <h3>Total Token</h3>
-                <div class="stat-value"><?= $tokensCount ?></div>
+            <div class="stat-card" style="border-left: 4px solid var(--accent-color);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h3>Total Token</h3>
+                        <div class="stat-value" style="color: var(--accent-color);"><?= $tokensCount ?></div>
+                    </div>
+                    <div style="background: rgba(232, 103, 41, 0.1); padding: 0.75rem; border-radius: 12px; color: var(--accent-color);">
+                        <i class="fas fa-key fa-lg"></i>
+                    </div>
+                </div>
             </div>
-            <div class="stat-card" style="background-color: var(--primary-dark);">
-                <h3>Suara Masuk</h3>
-                <div class="stat-value"><?= $votesCount ?></div>
+            <div class="stat-card" style="border-left: 4px solid var(--primary-dark);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h3>Suara Masuk</h3>
+                        <div class="stat-value" style="color: var(--primary-dark);"><?= $votesCount ?></div>
+                    </div>
+                    <div style="background: rgba(0, 116, 63, 0.1); padding: 0.75rem; border-radius: 12px; color: var(--primary-dark);">
+                        <i class="fas fa-envelope-open-text fa-lg"></i>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -530,7 +551,9 @@ $tokensList = $stmt->fetchAll();
         <div class="dashboard-grid mb-4">
             <?php foreach ($candidates as $c): ?>
                 <div class="candidate-card" id="card-<?= $c['id'] ?>">
-                    <img src="<?= (strpos($c['photo'], 'http') === 0) ? htmlspecialchars($c['photo']) : '../' . htmlspecialchars($c['photo']) ?>" class="candidate-img">
+                    <div class="candidate-img-wrapper">
+                        <img src="<?= (strpos($c['photo'], 'http') === 0) ? htmlspecialchars($c['photo']) : '../' . htmlspecialchars($c['photo']) ?>" class="candidate-img">
+                    </div>
                     <div class="candidate-info">
                         <div class="candidate-name"><?= htmlspecialchars($c['name']) ?></div>
                         <div class="candidate-vision"><?= htmlspecialchars($c['vision']) ?></div>

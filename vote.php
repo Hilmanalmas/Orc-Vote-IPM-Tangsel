@@ -75,7 +75,9 @@ $orgName = $stmt->fetchColumn();
                 <?php foreach ($candidates as $c): ?>
                     <div class="candidate-card" id="card-<?= $c['id'] ?>" onclick="toggleSelection(<?= $c['id'] ?>)">
                         <div class="select-overlay"><i class="fas fa-check"></i></div>
-                        <img src="<?= htmlspecialchars($c['photo']) ?>" class="candidate-img">
+                        <div class="candidate-img-wrapper">
+                            <img src="<?= htmlspecialchars($c['photo']) ?>" class="candidate-img">
+                        </div>
                         <div class="candidate-info">
                             <div class="candidate-name"><?= htmlspecialchars($c['name']) ?></div>
                             <div class="candidate-vision"><?= htmlspecialchars($c['vision']) ?></div>
