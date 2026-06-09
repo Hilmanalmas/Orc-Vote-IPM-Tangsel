@@ -74,11 +74,11 @@ header {
 }
 
 .fa-chart-bar {
-  color: #F47F3D;
+  color: var(--accent-color);
 }
 
 .fa-vote-yea {
-  color: #F47F3D;
+  color: var(--accent-color);
 }
 
 .logo img {
@@ -88,7 +88,7 @@ header {
 }
 
 .logo span {
-  color: #F47F3D; /* Explicitly black as per reference "PD IPM..." text */
+  color: var(--accent-color); /* Explicitly black as per reference "PD IPM..." text */
   font-family: 'Outfit', sans-serif;
 }
 
@@ -109,7 +109,7 @@ nav a {
 
 nav a:hover,
 nav a.active {
-  color: #F47F3D;
+  color: var(--accent-color);
   background: rgba(244, 127, 61, 0.05);
   border-radius: 6px;
 }
@@ -146,21 +146,21 @@ nav a.active {
 }
 
 .btn-primary {
-  background-color: #00984B;
+  background-color: var(--primary-color);
   color: white;
 }
 
 .btn-primary:hover {
-  background-color: #00743F;
+  background-color: var(--primary-dark);
 }
 
 .btn-accent {
-  background-color: #F47F3D;
+  background-color: var(--accent-color);
   color: white;
 }
 
 .btn-accent:hover {
-  background-color: #f59e0b;
+  background-color: var(--accent-color);
 }
 
 .btn-danger {
@@ -247,7 +247,7 @@ nav a.active {
 }
 
 .candidate-card.selected {
-  border-color: #00984B;
+  border-color: var(--primary-color);
   background-color: #f0fdf4;
 }
 
@@ -267,7 +267,7 @@ nav a.active {
   font-size: 1.25rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
-  color: #00984B;
+  color: var(--primary-color);
 }
 
 .candidate-vision {
@@ -299,13 +299,13 @@ nav a.active {
 
 .candidate-card.selected .select-overlay {
   opacity: 1;
-  background: #00984B;
+  background: var(--primary-color);
   color: white;
 }
 
 /* Admin specific */
 .stat-card {
-  background: #00984B;
+  background: var(--primary-color);
   color: white;
   padding: 1.5rem;
   border-radius: var(--radius);
@@ -419,7 +419,7 @@ nav a.active {
 /* Footer */
 /* Footer Themed Orange/Yellow Gradient (Textured Look) */
 .main-footer {
-  background: linear-gradient(135deg, #E86729 0%, #F59E0B 100%) !important;
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-color) 100%) !important;
   color: white !important;
   padding: 1rem 0;
   margin-top: auto;

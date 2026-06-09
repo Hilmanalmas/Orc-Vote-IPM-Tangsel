@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endif; ?>
             </div>
             <h1 class="mb-2">Selamat Datang</h1>
-            <h3 class="mb-4" style="color: #00984B; text-align: center;"><?= htmlspecialchars($orgData['organization_name']) ?></h3>
+            <h3 class="mb-4" style="color: var(--primary-color); text-align: center;"><?= htmlspecialchars($orgData['organization_name']) ?></h3>
             <p class="mb-4" style="color: #6b7280;">Silakan masukkan token untuk memilih.</p>
 
             <?php if ($error): ?>

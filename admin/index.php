@@ -95,7 +95,7 @@ $tokensList = $stmt->fetchAll();
                 <h3>Total Token</h3>
                 <div class="stat-value"><?= $tokensCount ?></div>
             </div>
-            <div class="stat-card" style="background-color: #F4C400;">
+            <div class="stat-card" style="background-color: var(--primary-dark);">
                 <h3>Suara Masuk</h3>
                 <div class="stat-value"><?= $votesCount ?></div>
             </div>

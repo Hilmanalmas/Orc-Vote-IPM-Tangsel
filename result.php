@@ -175,7 +175,7 @@ $leader = $results[0] ?? null;
 
             .progress-fill {
                 height: 100%;
-                background: linear-gradient(90deg, var(--primary-color) 0%, #34d399 100%);
+                background: linear-gradient(90deg, var(--primary-color) 0%, var(--accent-color) 100%);
                 border-radius: 999px;
                 width: 0%; /* Animated */
                 transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -242,7 +242,7 @@ $leader = $results[0] ?? null;
     </main>
 
     <!-- Slideshow Overlay -->
-    <div id="slideshow-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a5d3a; z-index: 200; align-items: center; justify-content: center; flex-direction: column;">
+    <div id="slideshow-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary-dark); z-index: 200; align-items: center; justify-content: center; flex-direction: column;">
         
         <!-- Controls -->
         <button onclick="stopSlideshow()" style="position: absolute; top: 2rem; right: 2rem; background: rgba(255,255,255,0.2); color: white; border: none; padding: 1rem; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; transition: background 0.2s; z-index: 202;">
