@@ -41,6 +41,9 @@ $tokensList = $stmt->fetchAll();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="../media/Logo%20Orch-Vote.png">
     <title>Admin Dashboard - <?= htmlspecialchars($currentAdmin['organization_name']) ?></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../style.css?v=<?= time() ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <?php
@@ -552,7 +555,7 @@ $tokensList = $stmt->fetchAll();
             <?php foreach ($candidates as $c): ?>
                 <div class="candidate-card" id="card-<?= $c['id'] ?>">
                     <div class="candidate-img-wrapper">
-                        <img src="<?= (strpos($c['photo'], 'http') === 0) ? htmlspecialchars($c['photo']) : '../' . htmlspecialchars($c['photo']) ?>" class="candidate-img">
+                        <img src="<?= (strpos($c['photo'], 'http') === 0) ? htmlspecialchars($c['photo']) : '../' . htmlspecialchars($c['photo']) ?>" class="candidate-img" loading="lazy" decoding="async">
                     </div>
                     <div class="candidate-info">
                         <div class="candidate-name"><?= htmlspecialchars($c['name']) ?></div>
