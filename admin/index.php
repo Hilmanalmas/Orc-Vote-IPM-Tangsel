@@ -66,7 +66,7 @@ $tokensList = $stmt->fetchAll();
         <div class="container nav-wrapper">
             <div class="logo">
                 <?php if ($settings['logo_path'] && $settings['logo_path'] !== 'media/Logo_PD_IPM.png'): ?>
-                    <img src="<?= (strpos($settings['logo_path'], 'http') === 0) ? htmlspecialchars($settings['logo_path']) : '../' . htmlspecialchars($settings['logo_path']) ?>" alt="Logo" style="height: 64px; width: auto; margin-right: 10px;">
+                    <img src="<?= (strpos($settings['logo_path'], 'http') === 0) ? htmlspecialchars($settings['logo_path']) : '../' . htmlspecialchars($settings['logo_path']) ?>" alt="Logo" style="height: 80px; width: auto; margin-right: 10px;">
                 <?php else: ?>
                     <i class="fas fa-vote-yea"></i>
                 <?php endif; ?>
@@ -140,7 +140,7 @@ $tokensList = $stmt->fetchAll();
                 <div class="input-group">
                     <label>Logo Organisasi</label>
                     <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
-                        <img id="logo-preview" src="<?= (strpos($settings['logo_path'], 'http') === 0) ? htmlspecialchars($settings['logo_path']) : '../' . htmlspecialchars($settings['logo_path']) ?>" style="height: 80px; width: auto; max-width: 200px; object-fit: contain; border: 1px solid #ddd; border-radius: 4px; padding: 4px; background: #fff;">
+                        <img id="logo-preview" src="<?= (strpos($settings['logo_path'], 'http') === 0) ? htmlspecialchars($settings['logo_path']) : '../' . htmlspecialchars($settings['logo_path']) ?>" style="height: 120px; width: auto; max-width: 250px; object-fit: contain; border: 1px solid #ddd; border-radius: 4px; padding: 4px; background: #fff;">
                         <input type="file" name="org_logo" id="org-logo-input" accept="image/*">
                     </div>
                     <p style="font-size: 0.8rem; color: #6b7280;">Upload logo untuk menyesuaikan warna tema secara otomatis (Akan mengekstrak 2-3 warna dominan).</p>

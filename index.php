@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="card">
             <div class="logo" style="justify-content: center; margin-bottom: 2rem; color: var(--primary-color);">
                 <?php if ($settings['logo_path'] && $settings['logo_path'] !== 'media/Logo_PD_IPM.png'): ?>
-                    <img src="<?= htmlspecialchars($settings['logo_path']) ?>" alt="Logo" style="height: 80px; width: auto;">
+                    <img src="<?= htmlspecialchars($settings['logo_path']) ?>" alt="Logo" style="height: 120px; width: auto;">
                 <?php else: ?>
                     <i class="fas fa-vote-yea" style="font-size: 2.5rem;"></i>
                 <?php endif; ?>
