@@ -561,7 +561,7 @@ $tokensList = $stmt->fetchAll();
                         <div class="candidate-name"><?= htmlspecialchars($c['name']) ?></div>
                         <div class="candidate-vision"><?= htmlspecialchars($c['vision']) ?></div>
                         <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-                            <button class="btn" style="background-color: #f59e0b; color: white; border: none; flex: 1;" 
+                            <button class="btn btn-accent" style="flex: 1;" 
                                 onclick='openEditModal(<?= json_encode($c) ?>)'>
                                 <i class="fas fa-edit"></i> Edit
                             </button>
