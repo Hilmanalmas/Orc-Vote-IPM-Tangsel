@@ -134,14 +134,20 @@ nav a.active {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem 1rem;
-  border-radius: 6px; /* Minimalist, sharper corners */
+  padding: 0.75rem 1.5rem; /* Reverted to modern, interactive size */
+  border-radius: 6px;
   border: none;
-  font-weight: 500;
-  font-size: 0.875rem; /* Sleeker typography */
+  font-weight: 600; /* Reverted to bold */
+  font-size: 1rem; /* Reverted to 16px */
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   text-decoration: none;
+}
+
+.btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .btn:hover {

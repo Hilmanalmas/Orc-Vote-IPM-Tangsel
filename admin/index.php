@@ -561,11 +561,11 @@ $tokensList = $stmt->fetchAll();
                         <div class="candidate-name"><?= htmlspecialchars($c['name']) ?></div>
                         <div class="candidate-vision"><?= htmlspecialchars($c['vision']) ?></div>
                         <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-                            <button class="btn btn-accent" style="flex: 1;" 
+                            <button class="btn btn-accent btn-sm" style="flex: 1;" 
                                 onclick='openEditModal(<?= json_encode($c) ?>)'>
                                 <i class="fas fa-edit"></i> Edit
                             </button>
-                            <a href="actions.php?action=delete_candidate&id=<?= $c['id'] ?>" class="btn btn-danger" style="flex: 1; text-align: center;" onclick="return confirm('Hapus kandidat ini?')">Hapus</a>
+                            <a href="actions.php?action=delete_candidate&id=<?= $c['id'] ?>" class="btn btn-danger btn-sm" style="flex: 1; text-align: center;" onclick="return confirm('Hapus kandidat ini?')">Hapus</a>
                         </div>
                     </div>
                 </div>
