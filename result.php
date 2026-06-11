@@ -1,11 +1,16 @@
 <?php
 require_once 'config.php';
 
+// Check Admin Authentication
+if (!isset($_SESSION['admin_id'])) {
+    header("Location: admin/login.php?error=Silakan login sebagai admin untuk melihat hasil");
+    exit;
+}
+
 // Check Organization ID
-if (!isset($_GET['org_id'])) {
-    // Redirect to Landing Page for selection (or we could duplicate landing logic here)
-    // For consistency, let's assume Landing Page is the entry point
-    header("Location: landing.php");
+if (!isset($_GET['org_id']) || $_GET['org_id'] != $_SESSION['admin_id']) {
+    // Force them to their own organization's result page
+    header("Location: result.php?org_id=" . $_SESSION['admin_id']);
     exit;
 }
 
