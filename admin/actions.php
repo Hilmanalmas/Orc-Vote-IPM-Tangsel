@@ -300,6 +300,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $max = (int)$_POST['max_vote'];
         $theme_color = $_POST['theme_color'] ?? '#00984B';
         $adminId = $_SESSION['admin_id'];
+        $orgName = $_POST['organization_name'] ?? '';
+
+        if (!empty($orgName)) {
+            $stmtOrg = $pdo->prepare("UPDATE admins SET organization_name = ? WHERE id = ?");
+            $stmtOrg->execute([$orgName, $adminId]);
+        }
 
         $logoPathUpdate = "";
         $paramsUpdate = [$min, $max, $theme_color, $adminId];

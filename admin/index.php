@@ -130,6 +130,11 @@ $tokensList = $stmt->fetchAll();
             <h2 class="mb-2"><i class="fas fa-cogs"></i> Pengaturan Voting & Tema</h2>
             <form action="actions.php?action=update_settings" method="POST" enctype="multipart/form-data">
                 <div class="input-group">
+                    <label>Nama Organisasi / Kegiatan:</label>
+                    <input type="text" name="organization_name" value="<?= htmlspecialchars($currentAdmin['organization_name']) ?>" required>
+                </div>
+
+                <div class="input-group">
                     <label>Jumlah Kandidat yang HARUS dipilih:</label>
                     <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
                         <input type="number" name="min_vote" value="<?= $settings['min_vote'] ?>" min="1" placeholder="Min" style="flex:1;">
