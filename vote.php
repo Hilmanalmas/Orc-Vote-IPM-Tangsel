@@ -74,7 +74,7 @@ $orgName = $stmt->fetchColumn();
         </div>
 
         <form id="vote-form" action="process_vote.php" method="POST">
-            <div class="dashboard-grid">
+            <div class="candidate-grid">
                 <?php foreach ($candidates as $c): ?>
                     <div class="candidate-card" id="card-<?= $c['id'] ?>" onclick="toggleSelection(<?= $c['id'] ?>)">
                         <div class="select-overlay"><i class="fas fa-check"></i></div>

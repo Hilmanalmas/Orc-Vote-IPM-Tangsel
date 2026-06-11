@@ -551,7 +551,7 @@ $tokensList = $stmt->fetchAll();
 
         <!-- Candidate List -->
         <h2 class="mb-2">Daftar Kandidat</h2>
-        <div class="dashboard-grid mb-4">
+        <div class="candidate-grid mb-4">
             <?php foreach ($candidates as $c): ?>
                 <div class="candidate-card" id="card-<?= $c['id'] ?>">
                     <div class="candidate-img-wrapper">
