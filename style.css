@@ -280,14 +280,15 @@ nav a.active {
 .candidate-img-wrapper {
   overflow: hidden;
   width: 100%;
-  height: 250px;
+  aspect-ratio: 3/4; /* Rasio standar pas foto (3x4) */
+  background-color: #f3f4f6;
 }
 
 .candidate-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  background-color: #e5e7eb;
+  object-position: top center; /* Memastikan wajah/kepala tidak terpotong */
   transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
