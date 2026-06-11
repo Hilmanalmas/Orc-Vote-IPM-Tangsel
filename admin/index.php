@@ -576,9 +576,9 @@ $tokensList = $stmt->fetchAll();
         <div class="settings-section" style="border: 2px solid #ef4444; background: #fef2f2;">
             <h2 class="mb-2" style="color: #ef4444;">Reset System</h2>
             <form action="actions.php" method="POST" style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <button type="submit" formaction="actions.php?action=reset_candidates" class="btn btn-danger" onclick="return confirm('Hapus SEMUA kandidat?')">Hapus Semua Kandidat</button>
-                <button type="submit" formaction="actions.php?action=reset_tokens" class="btn btn-danger" onclick="return confirm('Hapus SEMUA token?')">Hapus Semua Token</button>
-                <button type="submit" formaction="actions.php?action=reset_votes" class="btn btn-danger" onclick="return confirm('Hapus SEMUA suara?')">Hapus Semua Suara</button>
+                <button type="submit" formaction="actions.php?action=reset_candidates" class="btn btn-outline-danger" onclick="return confirm('Hapus SEMUA kandidat?')">Hapus Semua Kandidat</button>
+                <button type="submit" formaction="actions.php?action=reset_tokens" class="btn btn-outline-danger" onclick="return confirm('Hapus SEMUA token?')">Hapus Semua Token</button>
+                <button type="submit" formaction="actions.php?action=reset_votes" class="btn btn-outline-danger" onclick="return confirm('Hapus SEMUA suara?')">Hapus Semua Suara</button>
             </form>
         </div>
     </main>
