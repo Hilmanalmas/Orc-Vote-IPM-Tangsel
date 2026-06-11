@@ -80,7 +80,7 @@ $leader = $results[0] ?? null;
         <div class="container nav-wrapper">
             <div class="logo">
                 <?php if ($settings['logo_path'] && $settings['logo_path'] !== 'media/Logo_PD_IPM.png'): ?>
-                    <img src="<?= htmlspecialchars($settings['logo_path']) ?>" alt="Logo" style="height: 48px; width: auto; margin-right: 10px;">
+                    <img src="<?= htmlspecialchars($settings['logo_path']) ?>" alt="Logo" style="height: 64px; width: auto; margin-right: 10px;">
                 <?php else: ?>
                     <i class="fas fa-chart-bar"></i>
                 <?php endif; ?>
