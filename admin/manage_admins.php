@@ -1,9 +1,12 @@
 <?php
 require_once '../config.php';
 
-// Auth Check Removed as per request
-// if (!isset($_SESSION['admin_id'])) { ... }
-
+// Auth Check
+$adminCount = $pdo->query("SELECT COUNT(*) FROM admins")->fetchColumn();
+if ($adminCount > 0 && !isset($_SESSION['admin_id'])) {
+    header("Location: login.php");
+    exit;
+}
 // Fetch Admins
 $adminsList = $pdo->query("SELECT * FROM admins ORDER BY created_at DESC")->fetchAll();
 ?>
@@ -58,12 +61,17 @@ $adminsList = $pdo->query("SELECT * FROM admins ORDER BY created_at DESC")->fetc
                                 <span>
                                     <i class="fas fa-user"></i> <strong><?= htmlspecialchars($admin['username']) ?></strong>
                                     <small style="color: #6b7280;">(<?= htmlspecialchars($admin['organization_name'] ?? '-') ?>)</small>
-                                    <?php if ($admin['id'] == $_SESSION['admin_id']): ?>
+                                    <?php if ($admin['id'] == ($_SESSION['admin_id'] ?? 0)): ?>
                                         <span style="font-size: 0.8em; color: green;">(You)</span>
                                     <?php endif; ?>
                                 </span>
-                                <?php if ($admin['id'] != $_SESSION['admin_id']): ?>
-                                    <a href="actions.php?action=delete_admin&id=<?= $admin['id'] ?>&redirect=manage_admins.php" onclick="return confirm('Hapus admin ini?')" style="color: #ef4444;"><i class="fas fa-trash"></i></a>
+                                <?php if ($admin['id'] != ($_SESSION['admin_id'] ?? 0)): ?>
+                                    <form action="actions.php?action=delete_admin" method="POST" style="display:inline;" onsubmit="return confirm('Hapus admin ini?')">
+                                        <input type="hidden" name="id" value="<?= $admin['id'] ?>">
+                                        <input type="hidden" name="redirect" value="manage_admins.php">
+                                        <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
+                                        <button type="submit" style="background:none; border:none; color:#ef4444; cursor:pointer;"><i class="fas fa-trash"></i></button>
+                                    </form>
                                 <?php endif; ?>
                             </li>
                         <?php endforeach; ?>
@@ -74,6 +82,7 @@ $adminsList = $pdo->query("SELECT * FROM admins ORDER BY created_at DESC")->fetc
                 <div>
                     <h3 class="mb-2">Tambah Admin Baru</h3>
                     <form action="actions.php?action=add_admin&redirect=manage_admins.php" method="POST">
+                        <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
                         <div class="input-group">
                             <label>Username</label>
                             <input type="text" name="username" required autocomplete="off">

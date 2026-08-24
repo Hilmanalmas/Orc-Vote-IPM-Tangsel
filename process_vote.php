@@ -6,6 +6,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['voter_token']) ||
     exit;
 }
 
+$csrfToken = $_POST['csrf_token'] ?? '';
+if (!verifyCsrfToken($csrfToken)) {
+    die("Invalid CSRF Token");
+}
+
 $token = $_SESSION['voter_token'];
 $orgId = $_SESSION['org_id'];
 $selectedCandidates = $_POST['votes'] ?? [];

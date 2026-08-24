@@ -5,6 +5,15 @@ $action = $_GET['action'] ?? '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
+    // CSRF Check for all non-login POST actions
+    if ($action !== 'login') {
+        $csrfToken = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+        if (!verifyCsrfToken($csrfToken)) {
+            http_response_code(403);
+            die("Invalid CSRF Token");
+        }
+    }
+
     // Login Action (No Auth Required)
     if ($action === 'login') {
         // ... (existing login logic) ...
@@ -26,8 +35,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Add New Admin (Public Access)
+    // Add New Admin
     if ($action === 'add_admin') {
+        // Auth check for add_admin (allow public only if 0 admins exist)
+        $adminCount = $pdo->query("SELECT COUNT(*) FROM admins")->fetchColumn();
+        if ($adminCount > 0 && !isset($_SESSION['admin_id'])) {
+            http_response_code(403);
+            die("Unauthorized. Harap login untuk menambah admin.");
+        }
+
         $username = trim($_POST['username']);
         $orgName = trim($_POST['organization_name'] ?? 'Organisasi Baru');
         $password = $_POST['password'];
@@ -246,40 +262,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: index.php");
         exit;
     }
-    if ($action === 'reset_votes') {
-        $pdo->query("TRUNCATE TABLE votes");
-        $pdo->query("UPDATE tokens SET is_used = 0");
+
+    // Delete Admin (POST)
+    if ($action === 'delete_admin') {
+        $id = $_POST['id'];
+        $redirect = $_POST['redirect'] ?? 'index.php';
+        
+        // Prevent self-deletion if logged in
+        if (isset($_SESSION['admin_id']) && $id == $_SESSION['admin_id']) {
+            header("Location: $redirect?error=Tidak bisa menghapus akun sendiri");
+            exit;
+        }
+
+        $stmt = $pdo->prepare("DELETE FROM admins WHERE id = ?");
+        $stmt->execute([$id]);
+        header("Location: $redirect?msg=Admin dihapus");
+        exit;
+    }
+
+    // Delete Candidate (POST)
+    if ($action === 'delete_candidate') {
+        $id = $_POST['id'];
+        $stmt = $pdo->prepare("DELETE FROM candidates WHERE id = ?");
+        $stmt->execute([$id]);
         header("Location: index.php");
         exit;
     }
-}
-
-// Delete Admin (Public Access)
-if ($action === 'delete_admin') {
-    $id = $_GET['id'];
-    $redirect = $_GET['redirect'] ?? 'index.php';
-    
-    // Prevent self-deletion if logged in
-    if (isset($_SESSION['admin_id']) && $id == $_SESSION['admin_id']) {
-        header("Location: $redirect?error=Tidak bisa menghapus akun sendiri");
-        exit;
-    }
-
-    $stmt = $pdo->prepare("DELETE FROM admins WHERE id = ?");
-    $stmt->execute([$id]);
-    header("Location: $redirect?msg=Admin dihapus");
-    exit;
-}
-
-// --- SECURITY CHECK FOR GET REQUESTS ---
-if (!isset($_SESSION['admin_id'])) {
-    header("Location: login.php");
-    exit;
-}
-if ($action === 'delete_candidate') {
-    $id = $_GET['id'];
-    $stmt = $pdo->prepare("DELETE FROM candidates WHERE id = ?");
-    $stmt->execute([$id]);
-    header("Location: index.php");
-    exit;
 }

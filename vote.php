@@ -53,6 +53,7 @@ $orgName = $stmt->fetchColumn();
         </div>
 
         <form id="vote-form" action="process_vote.php" method="POST">
+            <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
             <div class="dashboard-grid">
                 <?php foreach ($candidates as $c): ?>
                     <div class="candidate-card" id="card-<?= $c['id'] ?>" onclick="toggleSelection(<?= $c['id'] ?>)">

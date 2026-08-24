@@ -28,4 +28,19 @@ function getSettings($pdo, $adminId = null) {
     // Fallback or Default
     return ['min_vote' => 1, 'max_vote' => 1, 'voting_enabled' => 1];
 }
+
+// CSRF Functions
+function generateCsrfToken() {
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+function verifyCsrfToken($token) {
+    if (isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token)) {
+        return true;
+    }
+    return false;
+}
 ?>

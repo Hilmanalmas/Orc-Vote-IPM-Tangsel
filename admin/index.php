@@ -87,6 +87,7 @@ $tokensList = $stmt->fetchAll();
         <div class="settings-section">
             <h2 class="mb-2"><i class="fas fa-cogs"></i> Pengaturan Voting</h2>
             <form action="actions.php?action=update_settings" method="POST">
+                <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
                 <div class="input-group">
                     <label>Jumlah Kandidat yang HARUS dipilih:</label>
                     <div style="display: flex; gap: 1rem;">
@@ -346,7 +347,7 @@ $tokensList = $stmt->fetchAll();
                             saveAllBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Memproses ${i + 1}/${queue.length}...`;
 
                             const formData = new FormData();
-                            // Send as single item array to match backend "candidates" structure
+                            formData.append('csrf_token', '<?= generateCsrfToken() ?>');
                             formData.append(`candidates[0][name]`, item.name);
                             formData.append(`candidates[0][vision]`, item.vision);
 
@@ -398,6 +399,7 @@ $tokensList = $stmt->fetchAll();
             <div class="settings-section">
                 <h2 class="mb-2"><i class="fas fa-key"></i> Generator Token</h2>
                 <form action="actions.php?action=generate_tokens" method="POST">
+                    <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
                     <div class="input-group">
                         <label>Jumlah Token</label>
                         <input type="number" name="count" value="10" min="1">
@@ -434,7 +436,11 @@ $tokensList = $stmt->fetchAll();
                                 onclick='openEditModal(<?= json_encode($c) ?>)'>
                                 <i class="fas fa-edit"></i> Edit
                             </button>
-                            <a href="actions.php?action=delete_candidate&id=<?= $c['id'] ?>" class="btn btn-danger" style="flex: 1; text-align: center;" onclick="return confirm('Hapus kandidat ini?')">Hapus</a>
+                            <form action="actions.php?action=delete_candidate" method="POST" style="flex: 1; display: flex;" onsubmit="return confirm('Hapus kandidat ini?')">
+                                <input type="hidden" name="id" value="<?= $c['id'] ?>">
+                                <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
+                                <button type="submit" class="btn btn-danger" style="flex: 1; width: 100%;">Hapus</button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -445,6 +451,7 @@ $tokensList = $stmt->fetchAll();
         <div class="settings-section" style="border: 2px solid #ef4444; background: #fef2f2;">
             <h2 class="mb-2" style="color: #ef4444;">Reset System</h2>
             <form action="actions.php" method="POST" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
                 <button type="submit" formaction="actions.php?action=reset_candidates" class="btn btn-danger" onclick="return confirm('Hapus SEMUA kandidat?')">Hapus Semua Kandidat</button>
                 <button type="submit" formaction="actions.php?action=reset_tokens" class="btn btn-danger" onclick="return confirm('Hapus SEMUA token?')">Hapus Semua Token</button>
                 <button type="submit" formaction="actions.php?action=reset_votes" class="btn btn-danger" onclick="return confirm('Hapus SEMUA suara?')">Hapus Semua Suara</button>
@@ -457,6 +464,7 @@ $tokensList = $stmt->fetchAll();
         <div style="background: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;">
             <h2 class="mb-4">Edit Kandidat</h2>
             <form action="actions.php?action=edit_candidate" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
                 <input type="hidden" name="id" id="edit-id">
                 
                 <div class="input-group">
