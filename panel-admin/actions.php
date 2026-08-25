@@ -104,6 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $username = trim($_POST['username']);
         $orgName = trim($_POST['organization_name'] ?? 'Organisasi Baru');
         $password = $_POST['password'];
+        $role = $_POST['role'] ?? 'admin'; // Get role from form
         $redirect = $_GET['redirect'] ?? 'index.php';
 
         // Check if username exists
@@ -115,8 +116,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $hash = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $pdo->prepare("INSERT INTO admins (username, password_hash, organization_name) VALUES (?, ?, ?)");
-        $stmt->execute([$username, $hash, $orgName]);
+        $stmt = $pdo->prepare("INSERT INTO admins (username, password_hash, organization_name, role) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$username, $hash, $orgName, $role]);
         
         // Also create default settings for this new admin
         $newAdminId = $pdo->lastInsertId();
