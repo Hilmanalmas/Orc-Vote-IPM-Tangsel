@@ -8,12 +8,13 @@ CREATE TABLE IF NOT EXISTS admins (
     username VARCHAR(50) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     organization_name VARCHAR(100) DEFAULT 'Organisasi Utama',
+    role ENUM('master', 'admin') DEFAULT 'admin',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Default Admin
-INSERT INTO admins (username, password_hash, organization_name) 
-SELECT 'admin', '$2y$10$VkWVFeBPHn9.7867au5VgecX83Qixh9rkipbq8I93K.BK8Hl5ZLyy', 'IPM Tangsel'
+INSERT INTO admins (username, password_hash, organization_name, role) 
+SELECT 'admin', '$2y$10$VkWVFeBPHn9.7867au5VgecX83Qixh9rkipbq8I93K.BK8Hl5ZLyy', 'IPM Tangsel', 'master'
 WHERE NOT EXISTS (SELECT * FROM admins);
 
 -- Settings Table (per admin)

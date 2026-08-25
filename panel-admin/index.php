@@ -77,6 +77,9 @@ $tokensList = $stmt->fetchAll();
                     <li><a href="../index.php?org_id=<?= $adminId ?>" target="_blank">Login Voter</a></li>
                     <li><a href="../result.php?org_id=<?= $adminId ?>" target="_blank">Live Count</a></li>
                     <li><a href="#" class="active">Admin Dashboard</a></li>
+                    <?php if (($_SESSION['admin_role'] ?? 'admin') === 'master'): ?>
+                    <li><a href="manage_admins.php" style="color: #f59e0b;"><i class="fas fa-users-cog"></i> Manage Admins</a></li>
+                    <?php endif; ?>
                     <li><a href="logout.php" style="color: #ef4444;"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                 </ul>
             </nav>

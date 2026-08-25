@@ -80,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($user && password_verify($password, $user['password_hash'])) {
             $_SESSION['admin_id'] = $user['id'];
             $_SESSION['admin_username'] = $user['username'];
+            $_SESSION['admin_role'] = $user['role'] ?? 'admin';
             header("Location: index.php");
             exit;
         } else {
@@ -95,8 +96,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         die("Unauthorized");
     }
 
-    // Add New Admin (Requires Auth)
+    // Add New Admin (Requires Master Auth)
     if ($action === 'add_admin') {
+        if (($_SESSION['admin_role'] ?? 'admin') !== 'master') {
+            die("Unauthorized: Master role required");
+        }
         $username = trim($_POST['username']);
         $orgName = trim($_POST['organization_name'] ?? 'Organisasi Baru');
         $password = $_POST['password'];
@@ -394,6 +398,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Delete Admin (Public Access)
 if ($action === 'delete_admin') {
+    if (($_SESSION['admin_role'] ?? 'admin') !== 'master') {
+        die("Unauthorized: Master role required");
+    }
     $id = $_GET['id'];
     $redirect = $_GET['redirect'] ?? 'index.php';
     

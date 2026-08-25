@@ -6,6 +6,9 @@ if (!isset($_SESSION['admin_id'])) {
     header("Location: login.php");
     exit;
 }
+if (($_SESSION['admin_role'] ?? 'admin') !== 'master') {
+    die("Akses Ditolak: Anda bukan Master Admin.");
+}
 
 // Fetch Admins
 $adminsList = $pdo->query("SELECT * FROM admins ORDER BY created_at DESC")->fetchAll();
@@ -29,7 +32,7 @@ $adminsList = $pdo->query("SELECT * FROM admins ORDER BY created_at DESC")->fetc
             <nav>
                 <ul>
                     <li><a href="index.php">Admin Dashboard</a></li>
-                    <li><a href="#" class="active">Admin Account Manager</a></li>
+                    <li><a href="#" class="active"><i class="fas fa-users-cog"></i> Manage Admins</a></li>
                 </ul>
             </nav>
         </div>

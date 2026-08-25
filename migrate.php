@@ -11,6 +11,17 @@ try {
         echo "Kolom 'theme_color' sudah ada.<br>";
     }
 
+    // Check if role exists in admins
+    $stmt = $pdo->query("SHOW COLUMNS FROM admins LIKE 'role'");
+    if ($stmt->rowCount() == 0) {
+        $pdo->exec("ALTER TABLE admins ADD COLUMN role ENUM('master', 'admin') DEFAULT 'admin'");
+        // Make the first admin (id=1 or username='admin') the master
+        $pdo->exec("UPDATE admins SET role = 'master' ORDER BY id ASC LIMIT 1");
+        echo "Kolom 'role' berhasil ditambahkan dan Master Admin diset!<br>";
+    } else {
+        echo "Kolom 'role' sudah ada.<br>";
+    }
+
     // Check if logo_path exists
     $stmt = $pdo->query("SHOW COLUMNS FROM settings LIKE 'logo_path'");
     if ($stmt->rowCount() == 0) {
