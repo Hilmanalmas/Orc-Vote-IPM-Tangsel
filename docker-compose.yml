@@ -45,6 +45,21 @@ services:
     networks:
       - ipm-network
 
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: ipm-pma
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      PMA_USER: ${DB_USER}
+      PMA_PASSWORD: ${DB_PASS}
+    ports:
+      - "8081:80"
+    depends_on:
+      - db
+    networks:
+      - ipm-network
+
 networks:
   ipm-network:
     driver: bridge
