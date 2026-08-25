@@ -3,7 +3,7 @@ require_once 'config.php';
 
 // Check Admin Authentication
 if (!isset($_SESSION['admin_id'])) {
-    header("Location: admin/login.php?error=Silakan login sebagai admin untuk melihat hasil");
+    header("Location: panel-admin/login.php?error=Silakan login sebagai admin untuk melihat hasil");
     exit;
 }
 
@@ -88,7 +88,7 @@ $leader = $results[0] ?? null;
             </div>
             <nav>
                 <ul>
-                    <li><a href="admin/index.php">Admin Dashboard</a></li>
+                    <li><a href="panel-admin/index.php">Admin Dashboard</a></li>
                     <li><a href="#" class="active">Live Count</a></li>
                 </ul>
             </nav>

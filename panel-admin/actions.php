@@ -88,7 +88,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Add New Admin (Public Access)
+    // --- SECURITY CHECK ---
+    // All actions below require login
+    if (!isset($_SESSION['admin_id'])) {
+        http_response_code(403);
+        die("Unauthorized");
+    }
+
+    // Add New Admin (Requires Auth)
     if ($action === 'add_admin') {
         $username = trim($_POST['username']);
         $orgName = trim($_POST['organization_name'] ?? 'Organisasi Baru');
@@ -114,15 +121,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: $redirect?msg=Admin berhasil ditambahkan");
         exit;
     }
-
-    // --- SECURITY CHECK ---
-    // All actions below require login
-    if (!isset($_SESSION['admin_id'])) {
-        http_response_code(403);
-        die("Unauthorized");
-    }
-
-    // add_admin moved up to allow public access
 
     // Batch Add Candidates
     if ($action === 'add_candidates_batch') {

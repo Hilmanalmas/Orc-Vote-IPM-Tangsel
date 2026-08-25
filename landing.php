@@ -37,7 +37,7 @@ $admins = $pdo->query("SELECT id, organization_name FROM admins ORDER BY id ASC"
             </div>
 
             <div style="margin-top: 2rem; font-size: 0.875rem;">
-                <a href="admin/login.php" style="color: #f59e0b;">Login Admin</a>
+                <a href="panel-admin/login.php" style="color: #f59e0b;">Login Admin</a>
             </div>
         </div>
     </main>

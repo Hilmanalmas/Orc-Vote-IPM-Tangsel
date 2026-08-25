@@ -1,8 +1,11 @@
 <?php
 require_once '../config.php';
 
-// Auth Check Removed as per request
-// if (!isset($_SESSION['admin_id'])) { ... }
+// Auth Check
+if (!isset($_SESSION['admin_id'])) {
+    header("Location: login.php");
+    exit;
+}
 
 // Fetch Admins
 $adminsList = $pdo->query("SELECT * FROM admins ORDER BY created_at DESC")->fetchAll();
