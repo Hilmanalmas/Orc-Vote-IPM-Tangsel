@@ -54,7 +54,7 @@ services:
       PMA_USER: ${DB_USER}
       PMA_PASSWORD: ${DB_PASS}
     ports:
-      - "8081:80"
+      - "9090:80"
     depends_on:
       - db
     networks:
