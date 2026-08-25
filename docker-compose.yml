@@ -53,8 +53,7 @@ services:
       PMA_HOST: db
       PMA_USER: ${DB_USER}
       PMA_PASSWORD: ${DB_PASS}
-    ports:
-      - "9090:80"
+      PMA_ABSOLUTE_URI: /phpmyadmin/
     depends_on:
       - db
     networks:
