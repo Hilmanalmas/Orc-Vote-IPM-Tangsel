@@ -48,18 +48,20 @@ try {
         throw new Exception("Pilihan tidak valid.");
     }
 
-    // 3. Check IP address (Limit 1 vote per IP per poll)
-    $stmt = $pdo->prepare("SELECT id FROM poll_votes WHERE poll_id = ? AND ip_address = ?");
-    $stmt->execute([$pollId, $ipAddress]);
-    if ($stmt->fetch()) {
-        throw new Exception("Anda sudah pernah memberikan suara pada polling ini (IP: " . htmlspecialchars($ipAddress) . ").");
+    // 3. Check Cookie (Limit 1 vote per browser per poll)
+    $cookieName = "voted_poll_" . $pollId;
+    if (isset($_COOKIE[$cookieName])) {
+        throw new Exception("Anda sudah pernah memberikan suara pada polling ini (Berdasarkan sesi perangkat).");
     }
 
-    // 4. Insert Vote
+    // 4. Insert Vote (We still record IP for auditing, but don't use it to block)
     $stmt = $pdo->prepare("INSERT INTO poll_votes (poll_id, option_id, ip_address) VALUES (?, ?, ?)");
     $stmt->execute([$pollId, $optionId, $ipAddress]);
 
     $pdo->commit();
+
+    // 5. Set Cookie to prevent double voting (expires in 1 year)
+    setcookie($cookieName, "1", time() + (365 * 24 * 60 * 60), "/");
 
     // Success redirect
     header("Location: poll?id=" . $pollId . "&msg=Terima kasih, suara Anda telah berhasil disimpan!");
