@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS votes (
 -- Polls Table
 CREATE TABLE IF NOT EXISTS `polls` (
   `id` int NOT NULL AUTO_INCREMENT,
+  `slug` varchar(64) UNIQUE,
   `admin_id` int NOT NULL,
   `title` varchar(255) NOT NULL,
   `description` text,

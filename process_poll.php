@@ -8,6 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $pollId = $_POST['poll_id'] ?? 0;
 $optionId = $_POST['option_id'] ?? 0;
+$slug = $_POST['slug'] ?? '';
 
 // Get IP Address safely
 function getClientIP() {
@@ -22,7 +23,7 @@ function getClientIP() {
 $ipAddress = getClientIP();
 
 if (!$pollId || !$optionId) {
-    header("Location: poll?id=" . $pollId . "&error=Pilihan tidak valid");
+    header("Location: poll?slug=" . urlencode($slug) . "&error=Pilihan tidak valid");
     exit;
 }
 
@@ -64,11 +65,11 @@ try {
     setcookie($cookieName, "1", time() + (365 * 24 * 60 * 60), "/");
 
     // Success redirect
-    header("Location: poll_success?id=" . $pollId);
+    header("Location: poll_success?slug=" . urlencode($slug));
     exit;
 
 } catch (Exception $e) {
     $pdo->rollBack();
-    header("Location: poll?id=" . $pollId . "&error=" . urlencode($e->getMessage()));
+    header("Location: poll?slug=" . urlencode($slug) . "&error=" . urlencode($e->getMessage()));
     exit;
 }

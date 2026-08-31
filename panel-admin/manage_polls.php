@@ -193,7 +193,7 @@ $settings = getSettings($pdo, $adminId);
                                             <span style="font-size: 0.8rem; color: #6b7280; margin-left: 0.5rem;">(<?= $totalVotes ?> Suara)</span>
                                         </div>
                                         <div style="display: flex; gap: 0.5rem;">
-                                            <button onclick="copyPollLink('<?= $poll['id'] ?>')" class="btn btn-secondary btn-sm" title="Copy Link"><i class="fas fa-link"></i> Copy Link</button>
+                                            <button onclick="copyPollLink('<?= $poll['slug'] ?>')" class="btn btn-secondary btn-sm" title="Copy Link"><i class="fas fa-link"></i> Copy Link</button>
                                             <button onclick='openEditPoll(<?= json_encode($poll) ?>, <?= json_encode($options) ?>)' class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Edit</button>
                                             <a href="poll_results?id=<?= $poll['id'] ?>" class="btn btn-accent btn-sm"><i class="fas fa-chart-bar"></i> Hasil</a>
                                             <a href="actions.php?action=reset_poll_votes&id=<?= $poll['id'] ?>" class="btn btn-warning btn-sm" onclick="return confirm('Hapus SEMUA suara pada polling ini? Tindakan ini tidak dapat dibatalkan!')"><i class="fas fa-undo"></i> Reset</a>
@@ -294,10 +294,10 @@ $settings = getSettings($pdo, $adminId);
             document.getElementById('edit-modal').style.display = 'flex';
         }
 
-        function copyPollLink(pollId) {
+        function copyPollLink(pollSlug) {
             // Use Javascript's window.location to get the real public domain regardless of reverse proxies
             let basePath = window.location.pathname.replace('/panel-admin/manage_polls.php', '').replace('/panel-admin/manage_polls', '');
-            let link = window.location.origin + basePath + '/poll?id=' + pollId;
+            let link = window.location.origin + basePath + '/poll?slug=' + pollSlug;
             
             navigator.clipboard.writeText(link).then(() => {
                 alert('Link polling disalin: ' + link);

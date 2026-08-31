@@ -11,7 +11,8 @@ try {
     echo "Creating polls table...\n";
     $pdo->exec("CREATE TABLE IF NOT EXISTS polls (
         id INT PRIMARY KEY AUTO_INCREMENT,
-        admin_id INT NOT NULL,
+    slug VARCHAR(64) UNIQUE,
+    admin_id INT NOT NULL,
         title VARCHAR(255) NOT NULL,
         description TEXT,
         success_message TEXT,

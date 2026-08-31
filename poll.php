@@ -1,11 +1,11 @@
 <?php
 require_once 'config.php';
 
-$pollId = $_GET['id'] ?? 0;
+$pollSlug = $_GET['slug'] ?? '';
 
 // Fetch Poll
-$stmt = $pdo->prepare("SELECT * FROM polls WHERE id = ?");
-$stmt->execute([$pollId]);
+$stmt = $pdo->prepare("SELECT * FROM polls WHERE slug = ?");
+$stmt->execute([$pollSlug]);
 $poll = $stmt->fetch();
 
 if (!$poll) {
@@ -178,8 +178,9 @@ $options = $stmt->fetchAll();
                     <div style="margin-bottom: 2rem;"></div>
                 <?php endif; ?>
 
-                <form action="process_poll.php" method="POST" id="pollForm">
+                <form method="POST" action="process_poll.php">
                     <input type="hidden" name="poll_id" value="<?= $poll['id'] ?>">
+                    <input type="hidden" name="slug" value="<?= htmlspecialchars($pollSlug) ?>">
                     
                     <div class="options-list">
                         <?php foreach ($options as $opt): ?>

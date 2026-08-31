@@ -1,11 +1,11 @@
 <?php
 require_once 'config.php';
 
-$pollId = $_GET['id'] ?? 0;
+$pollSlug = $_GET['slug'] ?? '';
 
 // Fetch Poll
-$stmt = $pdo->prepare("SELECT * FROM polls WHERE id = ?");
-$stmt->execute([$pollId]);
+$stmt = $pdo->prepare("SELECT * FROM polls WHERE slug = ?");
+$stmt->execute([$pollSlug]);
 $poll = $stmt->fetch();
 
 if (!$poll) {
@@ -82,7 +82,7 @@ $successMsg = !empty($poll['success_message']) ? $poll['success_message'] : "Ter
                 <?= nl2br(htmlspecialchars($successMsg)) ?>
             </p>
             
-            <a href="poll?id=<?= $poll['id'] ?>" class="btn btn-primary" style="display: inline-block; padding: 0.75rem 2rem; border-radius: 8px;">
+            <a href="poll?slug=<?= urlencode($poll['slug']) ?>" class="btn btn-primary" style="display: inline-block; padding: 0.75rem 2rem; border-radius: 8px;">
                 Kembali ke Polling
             </a>
         </div>

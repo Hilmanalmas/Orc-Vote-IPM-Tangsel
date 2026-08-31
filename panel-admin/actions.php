@@ -409,8 +409,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        $stmt = $pdo->prepare("INSERT INTO polls (admin_id, title, description, success_message) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$adminId, $title, $description, $successMsg]);
+        $slug = bin2hex(random_bytes(8));
+        $stmt = $pdo->prepare("INSERT INTO polls (admin_id, title, description, success_message, slug) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$adminId, $title, $description, $successMsg, $slug]);
         $pollId = $pdo->lastInsertId();
 
         $stmtOpt = $pdo->prepare("INSERT INTO poll_options (poll_id, option_text) VALUES (?, ?)");
