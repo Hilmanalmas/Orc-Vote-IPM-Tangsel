@@ -421,6 +421,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: manage_polls?msg=Polling berhasil dibuat");
         exit;
     }
+
+    // Edit Poll
+    if ($action === 'edit_poll') {
+        $pollId = $_POST['id'] ?? 0;
+        $title = trim($_POST['title'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $successMsg = trim($_POST['success_message'] ?? 'Terima kasih, suara Anda telah berhasil disimpan!');
+        $optionIds = $_POST['edit_option_ids'] ?? [];
+        $optionTexts = $_POST['edit_options'] ?? [];
+        $adminId = $_SESSION['admin_id'];
+
+        if (empty($title)) {
+            header("Location: manage_polls?error=Judul tidak boleh kosong");
+            exit;
+        }
+
+        // Verify poll ownership
+        $stmt = $pdo->prepare("SELECT id FROM polls WHERE id = ? AND admin_id = ?");
+        $stmt->execute([$pollId, $adminId]);
+        if (!$stmt->fetch()) {
+            header("Location: manage_polls?error=Polling tidak ditemukan");
+            exit;
+        }
+
+        try {
+            $pdo->beginTransaction();
+
+            $stmt = $pdo->prepare("UPDATE polls SET title = ?, description = ?, success_message = ? WHERE id = ?");
+            $stmt->execute([$title, $description, $successMsg, $pollId]);
+
+            // Update options
+            $stmtOpt = $pdo->prepare("UPDATE poll_options SET option_text = ? WHERE id = ? AND poll_id = ?");
+            foreach ($optionIds as $index => $optId) {
+                $text = trim($optionTexts[$index] ?? '');
+                if (!empty($text)) {
+                    $stmtOpt->execute([$text, $optId, $pollId]);
+                }
+            }
+
+            $pdo->commit();
+            header("Location: manage_polls?msg=Polling berhasil diperbarui");
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            header("Location: manage_polls?error=Gagal memperbarui polling");
+        }
+        exit;
+    }
 }
 
 // Delete Admin (Public Access)
