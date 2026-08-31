@@ -14,12 +14,13 @@ $stmt = $pdo->prepare("SELECT * FROM admins WHERE id = ?");
 $stmt->execute([$adminId]);
 $currentAdmin = $stmt->fetch();
 
+$settings = getSettings($pdo, $adminId);
+
 // Fetch Polls
 $stmt = $pdo->prepare("SELECT * FROM polls WHERE admin_id = ? ORDER BY created_at DESC");
 $stmt->execute([$adminId]);
 $polls = $stmt->fetchAll();
 
-// Get settings for logo/theme
 $settings = getSettings($pdo, $adminId);
 
 ?>
@@ -37,7 +38,12 @@ $settings = getSettings($pdo, $adminId);
     <header>
         <div class="container nav-wrapper">
             <div class="logo">
-                <i class="fas fa-poll"></i>Orch-Vote<span>Manage Polls</span>
+                <?php if ($settings['logo_path'] && $settings['logo_path'] !== 'media/Logo_PD_IPM.png'): ?>
+                    <img src="<?= (strpos($settings['logo_path'], 'http') === 0) ? htmlspecialchars($settings['logo_path']) : '../' . htmlspecialchars($settings['logo_path']) ?>" alt="Logo" style="height: 80px; width: auto; margin-right: 10px;">
+                <?php else: ?>
+                    <i class="fas fa-list"></i>
+                <?php endif; ?>
+                Orch-Vote<span>Manage Polls</span>
             </div>
             <nav>
                 <ul>
@@ -59,18 +65,57 @@ $settings = getSettings($pdo, $adminId);
 
         <?php if (isset($_GET['msg'])): ?>
             <div style="background: #dcfce7; color: #166534; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
-                <?= htmlspecialchars($_GET['msg']) ?>
+                <i class="fas fa-check-circle"></i> <?= htmlspecialchars($_GET['msg']) ?>
             </div>
         <?php endif; ?>
         <?php if (isset($_GET['error'])): ?>
             <div style="background: #fee2e2; color: #dc2626; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
-                <?= htmlspecialchars($_GET['error']) ?>
+                <i class="fas fa-exclamation-triangle"></i> <?= htmlspecialchars($_GET['error']) ?>
             </div>
         <?php endif; ?>
 
-        <div class="settings-section">
-            <div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
+        <!-- Settings Section -->
+        <div class="settings-section mb-4">
+            <h2 class="mb-2"><i class="fas fa-cogs"></i> Pengaturan Tema & Logo Polling</h2>
+            <form action="actions.php?action=update_settings" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="min_vote" value="<?= $settings['min_vote'] ?>">
+                <input type="hidden" name="max_vote" value="<?= $settings['max_vote'] ?>">
                 
+                <div class="input-group">
+                    <label>Nama Pembuat / Sapaan:</label>
+                    <input type="text" name="organization_name" value="<?= htmlspecialchars($currentAdmin['organization_name']) ?>" required>
+                </div>
+                
+                <div class="input-group">
+                    <label>Logo Polling</label>
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                        <img id="logo-preview" src="<?= (strpos($settings['logo_path'], 'http') === 0) ? htmlspecialchars($settings['logo_path']) : '../' . htmlspecialchars($settings['logo_path']) ?>" style="height: 120px; width: auto; max-width: 250px; object-fit: contain; border: 1px solid #ddd; border-radius: 4px; padding: 4px; background: #fff;">
+                        <input type="file" name="org_logo" id="org-logo-input" accept="image/*">
+                    </div>
+                    <p style="font-size: 0.8rem; color: #6b7280;">Upload logo untuk menyesuaikan warna tema secara otomatis.</p>
+                </div>
+
+                <div class="input-group">
+                    <label>Warna Tema Terdeteksi</label>
+                    <div style="display: flex; align-items: center; gap: 1rem;" id="color-previews-container">
+                        <?php 
+                            $colors = explode(',', $settings['theme_color']);
+                            for ($i = 0; $i < 3; $i++) {
+                                $c = $colors[$i] ?? $colors[0] ?? '#cccccc';
+                                echo "<div class='color-preview-circle' style='width: 40px; height: 40px; border-radius: 50%; background-color: " . htmlspecialchars($c) . "; border: 2px solid #e2e8f0;' title='Warna " . ($i+1) . "'></div>";
+                            }
+                        ?>
+                    </div>
+                    <input type="hidden" name="theme_color" id="theme-color-input" value="<?= htmlspecialchars($settings['theme_color']) ?>">
+                    <div id="color-hex-text" style="font-family: monospace; color: #4b5563; margin-top: 0.5rem; font-size: 0.85rem;"><?= htmlspecialchars($settings['theme_color']) ?></div>
+                </div>
+
+                <button type="submit" class="btn btn-success" style="margin-top: 1rem;"><i class="fas fa-save"></i> Simpan Pengaturan</button>
+            </form>
+        </div>
+
+        <div class="dashboard-grid mb-4" style="grid-template-columns: 1fr;">
+            
                 <!-- Create Poll -->
                 <div style="background: #f9fafb; padding: 1.5rem; border: 1px solid #e5e7eb; border-radius: 8px;">
                     <h3 class="mb-2">Buat Polling Baru</h3>
@@ -182,6 +227,69 @@ $settings = getSettings($pdo, $adminId);
         }
     </script>
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+    <script>
+        const logoInput = document.getElementById('org-logo-input');
+        const logoPreview = document.getElementById('logo-preview');
+        const previewsContainer = document.getElementById('color-previews-container');
+        const colorInput = document.getElementById('theme-color-input');
+        const colorHexText = document.getElementById('color-hex-text');
+        
+        // Helper to convert RGB to HEX
+        const rgbToHex = (r, g, b) => '#' + [r, g, b].map(x => {
+            const hex = x.toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+        }).join('');
+
+        if(logoInput) {
+            logoInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        logoPreview.src = event.target.result;
+                        
+                        // Use ColorThief
+                        const img = new Image();
+                        img.src = event.target.result;
+                        img.onload = function() {
+                            try {
+                                const colorThief = new ColorThief();
+                                // Get up to 3 colors
+                                const palette = colorThief.getPalette(img, 3);
+                                
+                                if (palette && palette.length > 0) {
+                                    const hexColors = palette.map(p => rgbToHex(p[0], p[1], p[2]));
+                                    // Ensure we always have 3 colors for the UI (fallback to first if fewer)
+                                    while(hexColors.length < 3) {
+                                        hexColors.push(hexColors[0]);
+                                    }
+                                    const top3 = hexColors.slice(0, 3);
+                                    const joined = top3.join(',');
+                                    
+                                    // Update Previews
+                                    previewsContainer.innerHTML = '';
+                                    top3.forEach((hex, i) => {
+                                        const div = document.createElement('div');
+                                        div.className = 'color-preview-circle';
+                                        div.style.cssText = `width: 40px; height: 40px; border-radius: 50%; background-color: ${hex}; border: 2px solid #e2e8f0;`;
+                                        div.title = `Warna ${i+1}`;
+                                        previewsContainer.appendChild(div);
+                                    });
+                                    
+                                    colorInput.value = joined;
+                                    colorHexText.textContent = joined;
+                                }
+                            } catch (err) {
+                                console.log("ColorThief failed or image is white/transparent", err);
+                            }
+                        }
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    </script>
     <?php $basePath = '../'; include '../footer.php'; ?>
 </body>
 </html>
