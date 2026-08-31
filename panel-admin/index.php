@@ -6,6 +6,10 @@ if (!isset($_SESSION['admin_id'])) {
     header("Location: login.php");
     exit;
 }
+if (($_SESSION['admin_role'] ?? 'admin') === 'poll_admin') {
+    header("Location: manage_polls.php");
+    exit;
+}
 
 // Fetch Data
 $adminId = $_SESSION['admin_id'];

@@ -65,6 +65,8 @@ $adminsList = $pdo->query("SELECT * FROM admins ORDER BY created_at DESC")->fetc
                                     <i class="fas fa-user"></i> <strong><?= htmlspecialchars($admin['username']) ?></strong>
                                     <?php if(($admin['role'] ?? 'admin') === 'master'): ?>
                                         <span style="background: #f59e0b; color: #fff; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.7em; margin-left: 0.25rem;">Master</span>
+                                    <?php elseif(($admin['role'] ?? 'admin') === 'poll_admin'): ?>
+                                        <span style="background: #3b82f6; color: #fff; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.7em; margin-left: 0.25rem;">Admin Polling</span>
                                     <?php endif; ?>
                                     <small style="color: #6b7280;">(<?= htmlspecialchars($admin['organization_name'] ?? '-') ?>)</small>
                                     <?php if ($admin['id'] == $_SESSION['admin_id']): ?>
@@ -99,6 +101,7 @@ $adminsList = $pdo->query("SELECT * FROM admins ORDER BY created_at DESC")->fetc
                             <label>Role</label>
                             <select name="role" required style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px; margin-top: 0.25rem;">
                                 <option value="admin">Admin Biasa</option>
+                                <option value="poll_admin">Admin Polling</option>
                                 <option value="master">Master Admin</option>
                             </select>
                         </div>

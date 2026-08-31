@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS admins (
     username VARCHAR(50) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     organization_name VARCHAR(100) DEFAULT 'Organisasi Utama',
-    role ENUM('master', 'admin') DEFAULT 'admin',
+    role ENUM('master', 'admin', 'poll_admin') DEFAULT 'admin',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -60,4 +60,34 @@ CREATE TABLE IF NOT EXISTS votes (
     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE,
     FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE
+);
+
+-- Polls Table
+CREATE TABLE IF NOT EXISTS polls (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    admin_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
+);
+
+-- Poll Options Table
+CREATE TABLE IF NOT EXISTS poll_options (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    poll_id INT NOT NULL,
+    option_text VARCHAR(255) NOT NULL,
+    FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE CASCADE
+);
+
+-- Poll Votes Table
+CREATE TABLE IF NOT EXISTS poll_votes (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    poll_id INT NOT NULL,
+    option_id INT NOT NULL,
+    ip_address VARCHAR(45),
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE CASCADE,
+    FOREIGN KEY (option_id) REFERENCES poll_options(id) ON DELETE CASCADE
 );

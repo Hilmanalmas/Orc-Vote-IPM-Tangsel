@@ -395,6 +395,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: index.php");
         exit;
     }
+
+    // Create Poll
+    if ($action === 'create_poll') {
+        $title = trim($_POST['title'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $options = array_filter(array_map('trim', $_POST['options'] ?? []));
+        $adminId = $_SESSION['admin_id'];
+
+        if (empty($title) || count($options) < 2) {
+            header("Location: manage_polls.php?error=Judul dan minimal 2 pilihan harus diisi");
+            exit;
+        }
+
+        $stmt = $pdo->prepare("INSERT INTO polls (admin_id, title, description) VALUES (?, ?, ?)");
+        $stmt->execute([$adminId, $title, $description]);
+        $pollId = $pdo->lastInsertId();
+
+        $stmtOpt = $pdo->prepare("INSERT INTO poll_options (poll_id, option_text) VALUES (?, ?)");
+        foreach ($options as $opt) {
+            $stmtOpt->execute([$pollId, $opt]);
+        }
+
+        header("Location: manage_polls.php?msg=Polling berhasil dibuat");
+        exit;
+    }
 }
 
 // Delete Admin (Public Access)
@@ -427,5 +452,22 @@ if ($action === 'delete_candidate') {
     $stmt = $pdo->prepare("DELETE FROM candidates WHERE id = ?");
     $stmt->execute([$id]);
     header("Location: index.php");
+    exit;
+}
+
+if ($action === 'toggle_poll') {
+    $id = $_GET['id'];
+    $state = $_GET['state'];
+    $stmt = $pdo->prepare("UPDATE polls SET is_active = ? WHERE id = ? AND admin_id = ?");
+    $stmt->execute([$state, $id, $_SESSION['admin_id']]);
+    header("Location: manage_polls.php?msg=Status polling diperbarui");
+    exit;
+}
+
+if ($action === 'delete_poll') {
+    $id = $_GET['id'];
+    $stmt = $pdo->prepare("DELETE FROM polls WHERE id = ? AND admin_id = ?");
+    $stmt->execute([$id, $_SESSION['admin_id']]);
+    header("Location: manage_polls.php?msg=Polling berhasil dihapus");
     exit;
 }
