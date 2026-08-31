@@ -32,7 +32,7 @@ $dark = $colors[2] ?? $primary;
 
 // Fetch Options
 $stmt = $pdo->prepare("SELECT * FROM poll_options WHERE poll_id = ?");
-$stmt->execute([$pollId]);
+$stmt->execute([$poll['id']]);
 $options = $stmt->fetchAll();
 
 ?>
