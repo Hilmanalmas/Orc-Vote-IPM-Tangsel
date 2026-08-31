@@ -64,7 +64,7 @@ try {
     setcookie($cookieName, "1", time() + (365 * 24 * 60 * 60), "/");
 
     // Success redirect
-    header("Location: poll?id=" . $pollId . "&msg=Terima kasih, suara Anda telah berhasil disimpan!");
+    header("Location: poll_success?id=" . $pollId);
     exit;
 
 } catch (Exception $e) {

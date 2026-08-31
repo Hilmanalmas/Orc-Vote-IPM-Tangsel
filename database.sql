@@ -63,15 +63,18 @@ CREATE TABLE IF NOT EXISTS votes (
 );
 
 -- Polls Table
-CREATE TABLE IF NOT EXISTS polls (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    admin_id INT NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    description TEXT,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
-);
+CREATE TABLE IF NOT EXISTS `polls` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `admin_id` int NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text,
+  `success_message` text,
+  `is_active` tinyint(1) DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `admin_id` (`admin_id`),
+  CONSTRAINT `polls_ibfk_1` FOREIGN KEY (`admin_id`) REFERENCES `admins` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Poll Options Table
 CREATE TABLE IF NOT EXISTS poll_options (

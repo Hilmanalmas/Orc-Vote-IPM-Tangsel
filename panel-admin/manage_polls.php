@@ -126,7 +126,12 @@ $settings = getSettings($pdo, $adminId);
                         </div>
                         <div class="input-group">
                             <label>Deskripsi (Opsional)</label>
-                            <textarea name="description" rows="2" placeholder="Informasi tambahan terkait polling ini..."></textarea>
+                            <textarea name="description" rows="2" placeholder="Penjelasan singkat..."></textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Pesan Sukses (Opsional)</label>
+                            <textarea name="success_message" rows="2" placeholder="Terima kasih, suara Anda telah berhasil disimpan!"></textarea>
+                            <span style="font-size: 0.8rem; color: #6b7280;">Teks ini akan muncul di halaman terpisah setelah user berhasil melakukan voting.</span>
                         </div>
                         <div class="input-group" id="options-container">
                             <label>Pilihan Jawaban</label>

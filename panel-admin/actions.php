@@ -400,6 +400,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'create_poll') {
         $title = trim($_POST['title'] ?? '');
         $description = trim($_POST['description'] ?? '');
+        $successMsg = trim($_POST['success_message'] ?? 'Terima kasih, suara Anda telah berhasil disimpan!');
         $options = array_filter(array_map('trim', $_POST['options'] ?? []));
         $adminId = $_SESSION['admin_id'];
 
@@ -408,8 +409,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        $stmt = $pdo->prepare("INSERT INTO polls (admin_id, title, description) VALUES (?, ?, ?)");
-        $stmt->execute([$adminId, $title, $description]);
+        $stmt = $pdo->prepare("INSERT INTO polls (admin_id, title, description, success_message) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$adminId, $title, $description, $successMsg]);
         $pollId = $pdo->lastInsertId();
 
         $stmtOpt = $pdo->prepare("INSERT INTO poll_options (poll_id, option_text) VALUES (?, ?)");

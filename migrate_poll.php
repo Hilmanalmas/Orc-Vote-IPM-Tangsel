@@ -14,6 +14,7 @@ try {
         admin_id INT NOT NULL,
         title VARCHAR(255) NOT NULL,
         description TEXT,
+        success_message TEXT,
         is_active BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
