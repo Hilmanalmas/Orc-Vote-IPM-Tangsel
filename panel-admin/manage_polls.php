@@ -33,6 +33,19 @@ $settings = getSettings($pdo, $adminId);
     <title>Manage Polls - <?= htmlspecialchars($currentAdmin['organization_name']) ?></title>
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <?php
+        $colors = explode(',', $settings['theme_color']);
+        $primary = $colors[0] ?? '#00984B';
+        $accent = $colors[1] ?? $primary;
+        $dark = $colors[2] ?? $primary;
+    ?>
+    <style>
+        :root {
+            --primary-color: <?= htmlspecialchars($primary) ?>;
+            --accent-color: <?= htmlspecialchars($accent) ?>;
+            --primary-dark: <?= htmlspecialchars($dark) ?>;
+        }
+    </style>
 </head>
 <body id="admin-page">
     <header>

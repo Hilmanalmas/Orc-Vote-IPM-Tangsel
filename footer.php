@@ -14,7 +14,7 @@
 
         <!-- Center: Copyright -->
         <div class="footer-center">
-             <p>&copy; 2026 PD IPM Tangerang Selatan<br>Dikelola oleh Lembaga Media dan Komunikasi PD IPM Tangerang Selatan</p>
+             <p>&copy; 2026 PD IPM Tangerang Selatan<br>Dikelola oleh Muhammad Hilman Almas</p>
         </div>
 
         <!-- Right: Contact -->
