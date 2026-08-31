@@ -58,7 +58,7 @@ $settings = getSettings($pdo, $adminId);
             </div>
             <nav>
                 <ul>
-                    <li><a href="manage_polls.php"><i class="fas fa-arrow-left"></i> Kembali ke Manage Polls</a></li>
+                    <li><a href="manage_polls"><i class="fas fa-arrow-left"></i> Kembali ke Manage Polls</a></li>
                 </ul>
             </nav>
         </div>

@@ -44,11 +44,11 @@ $settings = getSettings($pdo, $adminId);
                     <?php if ($adminRole !== 'poll_admin'): ?>
                         <li><a href="index.php">Admin Dashboard</a></li>
                     <?php endif; ?>
-                    <li><a href="manage_polls.php" class="active"><i class="fas fa-list"></i> Manage Polls</a></li>
+                    <li><a href="manage_polls" class="active"><i class="fas fa-list"></i> Manage Polls</a></li>
                     <?php if ($adminRole === 'master'): ?>
-                    <li><a href="manage_admins.php" style="color: #f59e0b;"><i class="fas fa-users-cog"></i> Manage Admins</a></li>
+                    <li><a href="manage_admins" style="color: #f59e0b;"><i class="fas fa-users-cog"></i> Manage Admins</a></li>
                     <?php endif; ?>
-                    <li><a href="logout.php" style="color: #ef4444;"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                    <li><a href="logout" style="color: #ef4444;"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                 </ul>
             </nav>
         </div>
@@ -130,17 +130,8 @@ $settings = getSettings($pdo, $adminId);
                                             <span style="font-size: 0.8rem; color: #6b7280; margin-left: 0.5rem;">(<?= $totalVotes ?> Suara)</span>
                                         </div>
                                         <div style="display: flex; gap: 0.5rem;">
-                                            <?php
-                                                // Get the base URL
-                                                $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
-                                                $host = $_SERVER['HTTP_HOST'];
-                                                $uri = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
-                                                // Remove /panel-admin
-                                                $baseDir = str_replace('/panel-admin', '', $uri);
-                                                $pollLink = $protocol . "://" . $host . $baseDir . "/poll?id=" . $poll['id'];
-                                            ?>
-                                            <button onclick="copyToClipboard('<?= $pollLink ?>')" class="btn btn-secondary btn-sm" title="Copy Link"><i class="fas fa-link"></i> Copy Link</button>
-                                            <a href="poll_results.php?id=<?= $poll['id'] ?>" class="btn btn-accent btn-sm"><i class="fas fa-chart-bar"></i> Hasil</a>
+                                            <button onclick="copyPollLink('<?= $poll['id'] ?>')" class="btn btn-secondary btn-sm" title="Copy Link"><i class="fas fa-link"></i> Copy Link</button>
+                                            <a href="poll_results?id=<?= $poll['id'] ?>" class="btn btn-accent btn-sm"><i class="fas fa-chart-bar"></i> Hasil</a>
                                             <a href="actions.php?action=toggle_poll&id=<?= $poll['id'] ?>&state=<?= $poll['is_active'] ? 0 : 1 ?>" class="btn btn-<?= $poll['is_active'] ? 'danger' : 'success' ?> btn-sm">
                                                 <?= $poll['is_active'] ? '<i class="fas fa-times-circle"></i> Tutup' : '<i class="fas fa-check-circle"></i> Buka' ?>
                                             </a>
@@ -177,9 +168,13 @@ $settings = getSettings($pdo, $adminId);
             container.appendChild(div);
         }
 
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                alert('Link polling disalin: ' + text);
+        function copyPollLink(pollId) {
+            // Use Javascript's window.location to get the real public domain regardless of reverse proxies
+            let basePath = window.location.pathname.replace('/panel-admin/manage_polls.php', '').replace('/panel-admin/manage_polls', '');
+            let link = window.location.origin + basePath + '/poll?id=' + pollId;
+            
+            navigator.clipboard.writeText(link).then(() => {
+                alert('Link polling disalin: ' + link);
             }).catch(err => {
                 console.error('Failed to copy: ', err);
                 alert('Gagal menyalin link.');

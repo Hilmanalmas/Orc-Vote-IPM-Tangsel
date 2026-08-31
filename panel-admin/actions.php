@@ -417,7 +417,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmtOpt->execute([$pollId, $opt]);
         }
 
-        header("Location: manage_polls.php?msg=Polling berhasil dibuat");
+        header("Location: manage_polls?msg=Polling berhasil dibuat");
         exit;
     }
 }
@@ -460,7 +460,7 @@ if ($action === 'toggle_poll') {
     $state = $_GET['state'];
     $stmt = $pdo->prepare("UPDATE polls SET is_active = ? WHERE id = ? AND admin_id = ?");
     $stmt->execute([$state, $id, $_SESSION['admin_id']]);
-    header("Location: manage_polls.php?msg=Status polling diperbarui");
+    header("Location: manage_polls?msg=Status polling diperbarui");
     exit;
 }
 
@@ -468,6 +468,6 @@ if ($action === 'delete_poll') {
     $id = $_GET['id'];
     $stmt = $pdo->prepare("DELETE FROM polls WHERE id = ? AND admin_id = ?");
     $stmt->execute([$id, $_SESSION['admin_id']]);
-    header("Location: manage_polls.php?msg=Polling berhasil dihapus");
+    header("Location: manage_polls?msg=Polling berhasil dihapus");
     exit;
 }

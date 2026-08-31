@@ -7,7 +7,7 @@ if (!isset($_SESSION['admin_id'])) {
     exit;
 }
 if (($_SESSION['admin_role'] ?? 'admin') === 'poll_admin') {
-    header("Location: manage_polls.php");
+    header("Location: manage_polls");
     exit;
 }
 
