@@ -196,6 +196,7 @@ $settings = getSettings($pdo, $adminId);
                                             <button onclick="copyPollLink('<?= $poll['id'] ?>')" class="btn btn-secondary btn-sm" title="Copy Link"><i class="fas fa-link"></i> Copy Link</button>
                                             <button onclick='openEditPoll(<?= json_encode($poll) ?>, <?= json_encode($options) ?>)' class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Edit</button>
                                             <a href="poll_results?id=<?= $poll['id'] ?>" class="btn btn-accent btn-sm"><i class="fas fa-chart-bar"></i> Hasil</a>
+                                            <a href="actions.php?action=reset_poll_votes&id=<?= $poll['id'] ?>" class="btn btn-warning btn-sm" onclick="return confirm('Hapus SEMUA suara pada polling ini? Tindakan ini tidak dapat dibatalkan!')"><i class="fas fa-undo"></i> Reset</a>
                                             <a href="actions.php?action=toggle_poll&id=<?= $poll['id'] ?>&state=<?= $poll['is_active'] ? 0 : 1 ?>" class="btn btn-<?= $poll['is_active'] ? 'danger' : 'success' ?> btn-sm">
                                                 <?= $poll['is_active'] ? '<i class="fas fa-times-circle"></i> Tutup' : '<i class="fas fa-check-circle"></i> Buka' ?>
                                             </a>

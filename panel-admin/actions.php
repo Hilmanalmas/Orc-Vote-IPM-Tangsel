@@ -519,3 +519,19 @@ if ($action === 'delete_poll') {
     header("Location: manage_polls?msg=Polling berhasil dihapus");
     exit;
 }
+
+if ($action === 'reset_poll_votes') {
+    $id = $_GET['id'];
+    
+    // Verifikasi kepemilikan
+    $stmt = $pdo->prepare("SELECT id FROM polls WHERE id = ? AND admin_id = ?");
+    $stmt->execute([$id, $_SESSION['admin_id']]);
+    if ($stmt->fetch()) {
+        $stmtDel = $pdo->prepare("DELETE FROM poll_votes WHERE poll_id = ?");
+        $stmtDel->execute([$id]);
+        header("Location: manage_polls?msg=Semua suara pada polling berhasil dihapus");
+    } else {
+        header("Location: manage_polls?error=Polling tidak ditemukan");
+    }
+    exit;
+}
