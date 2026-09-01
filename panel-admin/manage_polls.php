@@ -129,35 +129,69 @@ $settings = getSettings($pdo, $adminId);
 
         <div class="dashboard-grid mb-4" style="grid-template-columns: 1fr;">
             
-                <!-- Create Poll -->
                 <div style="background: #f9fafb; padding: 1.5rem; border: 1px solid #e5e7eb; border-radius: 8px;">
-                    <h3 class="mb-2">Buat Polling Baru</h3>
-                    <form action="actions.php?action=create_poll" method="POST">
+                    <h3 class="mb-2">Buat Form Polling Baru</h3>
+                    <form action="actions.php?action=create_poll" method="POST" id="create-poll-form">
                         <div class="input-group">
-                            <label>Judul Polling (Pertanyaan)</label>
-                            <input type="text" name="title" required placeholder="Contoh: Apa pendapat Anda tentang kegiatan ini?">
+                            <label>Judul Form Polling</label>
+                            <input type="text" name="title" required placeholder="Contoh: Form Evaluasi Kegiatan">
                         </div>
                         <div class="input-group">
                             <label>Deskripsi (Opsional)</label>
-                            <textarea name="description" rows="2" placeholder="Penjelasan singkat..."></textarea>
+                            <textarea name="description" rows="2" placeholder="Penjelasan singkat mengenai form ini..."></textarea>
                         </div>
                         <div class="input-group">
                             <label>Pesan Sukses (Opsional)</label>
-                            <textarea name="success_message" rows="2" placeholder="Terima kasih, suara Anda telah berhasil disimpan!"></textarea>
-                            <span style="font-size: 0.8rem; color: #6b7280;">Teks ini akan muncul di halaman terpisah setelah user berhasil melakukan voting.</span>
+                            <textarea name="success_message" rows="2" placeholder="Terima kasih, tanggapan Anda telah berhasil disimpan!"></textarea>
+                            <span style="font-size: 0.8rem; color: #6b7280;">Teks ini akan muncul di halaman terpisah setelah user berhasil mengirim tanggapan.</span>
                         </div>
-                        <div class="input-group" id="options-container">
-                            <label>Pilihan Jawaban</label>
-                            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                <input type="text" name="options[]" required placeholder="Pilihan 1">
-                            </div>
-                            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                <input type="text" name="options[]" required placeholder="Pilihan 2">
+
+                        <hr style="margin: 2rem 0; border: none; border-top: 1px solid #e5e7eb;">
+                        <h4 class="mb-2">Daftar Pertanyaan</h4>
+                        
+                        <div id="questions-container">
+                            <!-- Pertanyaan pertama default -->
+                            <div class="question-block" style="background: white; padding: 1rem; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 1rem; position: relative;">
+                                <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                                    <div style="flex: 1;">
+                                        <label>Pertanyaan</label>
+                                        <input type="text" name="questions[0][text]" required placeholder="Ketik pertanyaan...">
+                                    </div>
+                                    <div>
+                                        <label>Tipe Pertanyaan</label>
+                                        <select name="questions[0][type]" class="question-type-select" onchange="toggleOptions(this, 0)" style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px;">
+                                            <option value="short_text">Teks Singkat</option>
+                                            <option value="long_text">Teks Panjang (Paragraf)</option>
+                                            <option value="polling" selected>Pilihan Ganda (Polling)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="options-container-block" id="options-container-0" style="margin-bottom: 1rem;">
+                                    <label>Pilihan Jawaban</label>
+                                    <div class="options-list">
+                                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                            <input type="text" name="questions[0][options][]" required placeholder="Pilihan 1">
+                                        </div>
+                                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                            <input type="text" name="questions[0][options][]" required placeholder="Pilihan 2">
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="addOptionField(this, 0)">+ Tambah Pilihan</button>
+                                </div>
+
+                                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 1rem;">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0; cursor: pointer;">
+                                        <input type="checkbox" name="questions[0][is_required]" value="1" checked style="width: auto;"> Wajib Diisi
+                                    </label>
+                                    <button type="button" class="btn btn-danger btn-sm" onclick="removeQuestionBlock(this)"><i class="fas fa-trash"></i> Hapus Pertanyaan</button>
+                                </div>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-secondary btn-sm mb-2" onclick="addOptionField()">+ Tambah Pilihan</button>
-                        <br>
-                        <button type="submit" class="btn btn-primary mt-2">Buat Polling</button>
+
+                        <button type="button" class="btn btn-secondary mb-4" onclick="addQuestionBlock()" style="width: 100%; border-style: dashed;"><i class="fas fa-plus"></i> Tambah Pertanyaan Baru</button>
+                        
+                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem;">Buat Form Polling</button>
                     </form>
                 </div>
                 
@@ -221,17 +255,87 @@ $settings = getSettings($pdo, $adminId);
     </main>
 
     <script>
-        function addOptionField() {
-            const container = document.getElementById('options-container');
-            const count = container.children.length; // Includes label
+        let questionCount = 1;
+
+        function addQuestionBlock() {
+            const container = document.getElementById('questions-container');
+            const qId = questionCount++;
+            
             const div = document.createElement('div');
-            div.style.cssText = 'display: flex; gap: 0.5rem; margin-bottom: 0.5rem;';
+            div.className = 'question-block';
+            div.style.cssText = 'background: white; padding: 1rem; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 1rem; position: relative;';
             div.innerHTML = `
-                <input type="text" name="options[]" required placeholder="Pilihan ${count}">
-                <button type="button" class="btn btn-danger btn-sm" style="padding: 0 0.5rem;" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
+                <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <div style="flex: 1;">
+                        <label>Pertanyaan</label>
+                        <input type="text" name="questions[${qId}][text]" required placeholder="Ketik pertanyaan...">
+                    </div>
+                    <div>
+                        <label>Tipe Pertanyaan</label>
+                        <select name="questions[${qId}][type]" class="question-type-select" onchange="toggleOptions(this, ${qId})" style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px;">
+                            <option value="short_text">Teks Singkat</option>
+                            <option value="long_text">Teks Panjang (Paragraf)</option>
+                            <option value="polling">Pilihan Ganda (Polling)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="options-container-block" id="options-container-${qId}" style="margin-bottom: 1rem; display: none;">
+                    <label>Pilihan Jawaban</label>
+                    <div class="options-list">
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <input type="text" name="questions[${qId}][options][]" placeholder="Pilihan 1">
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="addOptionField(this, ${qId})">+ Tambah Pilihan</button>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 1rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0; cursor: pointer;">
+                        <input type="checkbox" name="questions[${qId}][is_required]" value="1" checked style="width: auto;"> Wajib Diisi
+                    </label>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="removeQuestionBlock(this)"><i class="fas fa-trash"></i> Hapus Pertanyaan</button>
+                </div>
             `;
             container.appendChild(div);
         }
+
+        function toggleOptions(selectElem, qId) {
+            const optionsBlock = document.getElementById('options-container-' + qId);
+            const inputs = optionsBlock.querySelectorAll('input[type="text"]');
+            if (selectElem.value === 'polling') {
+                optionsBlock.style.display = 'block';
+                inputs.forEach(input => input.setAttribute('required', 'required'));
+            } else {
+                optionsBlock.style.display = 'none';
+                inputs.forEach(input => input.removeAttribute('required'));
+            }
+        }
+
+        function removeQuestionBlock(btn) {
+            btn.closest('.question-block').remove();
+        }
+
+        function addOptionField(btn, qId) {
+            const list = btn.previousElementSibling;
+            const count = list.children.length + 1;
+            const div = document.createElement('div');
+            div.style.cssText = 'display: flex; gap: 0.5rem; margin-bottom: 0.5rem;';
+            div.innerHTML = `
+                <input type="text" name="questions[${qId}][options][]" required placeholder="Pilihan ${count}">
+                <button type="button" class="btn btn-danger btn-sm" style="padding: 0 0.5rem;" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>
+            `;
+            list.appendChild(div);
+        }
+
+        // Validate form on submit
+        document.getElementById('create-poll-form').addEventListener('submit', function(e) {
+            const qBlocks = document.querySelectorAll('.question-block');
+            if(qBlocks.length === 0) {
+                e.preventDefault();
+                alert('Silakan tambah setidaknya satu pertanyaan.');
+            }
+        });
     </script>
     
     <!-- Edit Poll Modal -->

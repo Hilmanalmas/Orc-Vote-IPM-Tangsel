@@ -30,10 +30,21 @@ $primary = $colors[0] ?? '#00984B';
 $accent = $colors[1] ?? $primary;
 $dark = $colors[2] ?? $primary;
 
+// Fetch Questions
+$stmt = $pdo->prepare("SELECT * FROM poll_questions WHERE poll_id = ? ORDER BY order_num ASC, id ASC");
+$stmt->execute([$poll['id']]);
+$questions = $stmt->fetchAll();
+
 // Fetch Options
 $stmt = $pdo->prepare("SELECT * FROM poll_options WHERE poll_id = ?");
 $stmt->execute([$poll['id']]);
-$options = $stmt->fetchAll();
+$allOptions = $stmt->fetchAll();
+
+// Group options by question_id
+$optionsByQuestion = [];
+foreach ($allOptions as $opt) {
+    $optionsByQuestion[$opt['question_id']][] = $opt;
+}
 
 ?>
 <!DOCTYPE html>
@@ -139,6 +150,52 @@ $options = $stmt->fetchAll();
             border-color: var(--primary-color);
             background-color: rgba(0, 152, 75, 0.05); /* very light primary */
         }
+
+        .question-container {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .question-container:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .question-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .required-asterisk {
+            color: #ef4444;
+        }
+
+        .text-input, .textarea-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .text-input:focus, .textarea-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .textarea-input {
+            resize: vertical;
+            min-height: 100px;
+        }
     </style>
 </head>
 <body id="login-page"> <!-- Reuse login-page background styles -->
@@ -182,18 +239,44 @@ $options = $stmt->fetchAll();
                     <input type="hidden" name="poll_id" value="<?= $poll['id'] ?>">
                     <input type="hidden" name="slug" value="<?= htmlspecialchars($pollSlug) ?>">
                     
-                    <div class="options-list">
-                        <?php foreach ($options as $opt): ?>
-                            <label class="poll-option" onclick="selectOption(this)">
-                                <input type="radio" name="option_id" value="<?= $opt['id'] ?>" required>
-                                <span class="option-text"><?= htmlspecialchars($opt['option_text']) ?></span>
-                                <span class="checkmark"></span>
-                            </label>
+                    <div class="questions-list">
+                        <?php foreach ($questions as $index => $q): ?>
+                            <div class="question-container">
+                                <div class="question-title">
+                                    <span><?= htmlspecialchars($q['question_text']) ?></span>
+                                    <?php if ($q['is_required']): ?>
+                                        <span class="required-asterisk">*</span>
+                                    <?php endif; ?>
+                                </div>
+
+                                <?php $reqAttr = $q['is_required'] ? 'required' : ''; ?>
+                                
+                                <?php if ($q['question_type'] === 'short_text'): ?>
+                                    <input type="text" name="answers[<?= $q['id'] ?>]" class="text-input" placeholder="Jawaban Anda" <?= $reqAttr ?>>
+                                
+                                <?php elseif ($q['question_type'] === 'long_text'): ?>
+                                    <textarea name="answers[<?= $q['id'] ?>]" class="textarea-input" placeholder="Jawaban Anda" <?= $reqAttr ?>></textarea>
+                                
+                                <?php elseif ($q['question_type'] === 'polling'): ?>
+                                    <?php 
+                                        $qOptions = $optionsByQuestion[$q['id']] ?? []; 
+                                    ?>
+                                    <div class="options-list">
+                                        <?php foreach ($qOptions as $opt): ?>
+                                            <label class="poll-option" onclick="selectOption(this, <?= $q['id'] ?>)">
+                                                <input type="radio" name="answers[<?= $q['id'] ?>]" value="<?= $opt['id'] ?>" <?= $reqAttr ?>>
+                                                <span class="option-text"><?= htmlspecialchars($opt['option_text']) ?></span>
+                                                <span class="checkmark"></span>
+                                            </label>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
                         <?php endforeach; ?>
                     </div>
 
                     <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem; margin-top: 1.5rem; border-radius: 8px;">
-                        Kirim Pilihan
+                        Kirim Jawaban
                     </button>
                 </form>
             <?php endif; ?>
@@ -201,9 +284,10 @@ $options = $stmt->fetchAll();
     </main>
 
     <script>
-        function selectOption(labelElement) {
-            // Remove 'selected' class from all options
-            const allOptions = document.querySelectorAll('.poll-option');
+        function selectOption(labelElement, questionId) {
+            // Remove 'selected' class from all options in the same question
+            const container = labelElement.closest('.options-list');
+            const allOptions = container.querySelectorAll('.poll-option');
             allOptions.forEach(opt => opt.classList.remove('selected'));
             
             // Add 'selected' class to the clicked one

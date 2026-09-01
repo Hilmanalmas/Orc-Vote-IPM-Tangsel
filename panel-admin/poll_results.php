@@ -19,20 +19,32 @@ if (!$poll) {
     die("Polling tidak ditemukan atau Anda tidak memiliki akses.");
 }
 
-// Fetch Options and Votes
-$stmt = $pdo->prepare("
-    SELECT o.id, o.option_text, COUNT(v.id) as vote_count 
-    FROM poll_options o 
-    LEFT JOIN poll_votes v ON o.id = v.option_id 
-    WHERE o.poll_id = ? 
-    GROUP BY o.id
-");
+// Fetch Polling Questions and Options
+$stmt = $pdo->prepare("SELECT id, question_text FROM poll_questions WHERE poll_id = ? AND question_type = 'polling' ORDER BY order_num ASC");
 $stmt->execute([$pollId]);
-$results = $stmt->fetchAll();
+$questions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$totalVotes = 0;
-foreach ($results as $res) {
-    $totalVotes += $res['vote_count'];
+$resultsData = [];
+$totalSubmissions = 0;
+
+// Get total submissions by counting unique IP + Date combination for this poll
+$stmtTotal = $pdo->prepare("SELECT COUNT(DISTINCT CONCAT(ip_address, DATE_FORMAT(submitted_at, '%Y-%m-%d %H:%i'))) FROM poll_answers WHERE poll_id = ?");
+$stmtTotal->execute([$pollId]);
+$totalSubmissions = $stmtTotal->fetchColumn();
+
+foreach ($questions as $q) {
+    $stmtOpt = $pdo->prepare("
+        SELECT o.id, o.option_text, COUNT(a.id) as vote_count 
+        FROM poll_options o 
+        LEFT JOIN poll_answers a ON o.id = a.option_id 
+        WHERE o.question_id = ? 
+        GROUP BY o.id
+    ");
+    $stmtOpt->execute([$q['id']]);
+    $resultsData[$q['id']] = [
+        'text' => $q['question_text'],
+        'options' => $stmtOpt->fetchAll(PDO::FETCH_ASSOC)
+    ];
 }
 
 // Get settings for logo/theme
@@ -86,76 +98,95 @@ $settings = getSettings($pdo, $adminId);
             
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #e5e7eb;">
                 <div>
-                    <span style="font-size: 1.5rem; font-weight: bold; color: #10b981;"><?= $totalVotes ?></span>
-                    <span style="color: #6b7280;">Total Suara</span>
+                    <span style="font-size: 1.5rem; font-weight: bold; color: #10b981;"><?= $totalSubmissions ?></span>
+                    <span style="color: #6b7280;">Total Responden</span>
                 </div>
-                <div>
-                    Status: <span style="font-weight: bold; color: <?= $poll['is_active'] ? '#10b981' : '#ef4444' ?>;"><?= $poll['is_active'] ? 'Aktif' : 'Ditutup' ?></span>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <a href="actions.php?action=export_csv&id=<?= $pollId ?>" class="btn btn-primary"><i class="fas fa-file-csv"></i> Download CSV</a>
+                    <div>Status: <span style="font-weight: bold; color: <?= $poll['is_active'] ? '#10b981' : '#ef4444' ?>;"><?= $poll['is_active'] ? 'Aktif' : 'Ditutup' ?></span></div>
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-                <!-- Table Results -->
-                <div>
-                    <h3 class="mb-2">Rincian Suara</h3>
-                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                        <thead>
-                            <tr style="border-bottom: 2px solid #e5e7eb;">
-                                <th style="padding: 0.75rem 0;">Pilihan</th>
-                                <th style="padding: 0.75rem 0;">Jumlah</th>
-                                <th style="padding: 0.75rem 0;">Persentase</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($results as $res): ?>
-                                <?php $percentage = $totalVotes > 0 ? round(($res['vote_count'] / $totalVotes) * 100, 1) : 0; ?>
-                                <tr style="border-bottom: 1px solid #e5e7eb;">
-                                    <td style="padding: 0.75rem 0;"><?= htmlspecialchars($res['option_text']) ?></td>
-                                    <td style="padding: 0.75rem 0;"><strong><?= $res['vote_count'] ?></strong></td>
-                                    <td style="padding: 0.75rem 0; color: #6b7280;"><?= $percentage ?>%</td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+            <?php if (empty($resultsData)): ?>
+                <div style="text-align: center; color: #6b7280; padding: 2rem;">
+                    Tidak ada pertanyaan bertipe pilihan ganda (polling) untuk ditampilkan grafiknya. Silakan download CSV untuk melihat jawaban teks.
                 </div>
+            <?php else: ?>
+                <?php foreach ($resultsData as $qId => $data): ?>
+                    <h3 class="mb-4 mt-4" style="border-bottom: 2px solid var(--primary-color); display: inline-block; padding-bottom: 0.5rem;"><?= htmlspecialchars($data['text']) ?></h3>
+                    
+                    <?php 
+                        $qTotalVotes = 0;
+                        foreach ($data['options'] as $res) $qTotalVotes += $res['vote_count'];
+                    ?>
 
-                <!-- Chart Results -->
-                <div>
-                    <canvas id="pollChart"></canvas>
-                </div>
-            </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 4rem;">
+                        <!-- Table Results -->
+                        <div>
+                            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                                <thead>
+                                    <tr style="border-bottom: 2px solid #e5e7eb;">
+                                        <th style="padding: 0.75rem 0;">Pilihan</th>
+                                        <th style="padding: 0.75rem 0;">Jumlah</th>
+                                        <th style="padding: 0.75rem 0;">Persentase</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($data['options'] as $res): ?>
+                                        <?php $percentage = $qTotalVotes > 0 ? round(($res['vote_count'] / $qTotalVotes) * 100, 1) : 0; ?>
+                                        <tr style="border-bottom: 1px solid #e5e7eb;">
+                                            <td style="padding: 0.75rem 0;"><?= htmlspecialchars($res['option_text']) ?></td>
+                                            <td style="padding: 0.75rem 0;"><strong><?= $res['vote_count'] ?></strong></td>
+                                            <td style="padding: 0.75rem 0; color: #6b7280;"><?= $percentage ?>%</td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Chart Results -->
+                        <div>
+                            <canvas id="pollChart_<?= $qId ?>"></canvas>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
     </main>
 
     <script>
-        const ctx = document.getElementById('pollChart').getContext('2d');
-        const data = {
-            labels: [
-                <?php foreach ($results as $res) echo "'" . addslashes($res['option_text']) . "', "; ?>
-            ],
-            datasets: [{
-                data: [
-                    <?php foreach ($results as $res) echo $res['vote_count'] . ", "; ?>
+        <?php foreach ($resultsData as $qId => $data): ?>
+        (function() {
+            const ctx = document.getElementById('pollChart_<?= $qId ?>').getContext('2d');
+            const data = {
+                labels: [
+                    <?php foreach ($data['options'] as $res) echo "'" . addslashes($res['option_text']) . "', "; ?>
                 ],
-                backgroundColor: [
-                    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#14b8a6'
-                ],
-                borderWidth: 1
-            }]
-        };
+                datasets: [{
+                    data: [
+                        <?php foreach ($data['options'] as $res) echo $res['vote_count'] . ", "; ?>
+                    ],
+                    backgroundColor: [
+                        '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#14b8a6'
+                    ],
+                    borderWidth: 1
+                }]
+            };
 
-        new Chart(ctx, {
-            type: 'pie',
-            data: data,
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
+            new Chart(ctx, {
+                type: 'pie',
+                data: data,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
                     }
                 }
-            }
-        });
+            });
+        })();
+        <?php endforeach; ?>
     </script>
 </body>
 </html>
