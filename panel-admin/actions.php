@@ -683,7 +683,7 @@ if ($action === 'export_csv') {
     foreach ($questions as $q) {
         $headerRow[] = $q['question_text'];
     }
-    fputcsv($output, $headerRow);
+    fputcsv($output, $headerRow, ',', '"', '\\');
 
     // Data Rows
     foreach ($submissions as $sub) {
@@ -691,7 +691,7 @@ if ($action === 'export_csv') {
         foreach ($questions as $q) {
             $row[] = isset($sub['answers'][$q['id']]) ? $sub['answers'][$q['id']] : '';
         }
-        fputcsv($output, $row);
+        fputcsv($output, $row, ',', '"', '\\');
     }
     fclose($output);
     exit;

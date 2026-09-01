@@ -47,6 +47,37 @@ foreach ($questions as $q) {
     ];
 }
 
+// Fetch ALL Questions for the raw data table
+$stmtAllQ = $pdo->prepare("SELECT id, question_text FROM poll_questions WHERE poll_id = ? ORDER BY order_num ASC, id ASC");
+$stmtAllQ->execute([$pollId]);
+$allQuestions = $stmtAllQ->fetchAll(PDO::FETCH_ASSOC);
+
+// Fetch All Answers Grouped by IP & Date for the table
+$stmtA = $pdo->prepare("
+    SELECT a.question_id, a.text_answer, a.ip_address, a.submitted_at, o.option_text
+    FROM poll_answers a
+    LEFT JOIN poll_options o ON a.option_id = o.id
+    WHERE a.poll_id = ?
+    ORDER BY a.submitted_at DESC
+");
+$stmtA->execute([$pollId]);
+$rawAnswers = $stmtA->fetchAll(PDO::FETCH_ASSOC);
+
+$submissions = [];
+foreach ($rawAnswers as $ans) {
+    // Group by minute to approximate a session
+    $key = $ans['ip_address'] . '_' . date('Y-m-d H:i', strtotime($ans['submitted_at']));
+    if (!isset($submissions[$key])) {
+        $submissions[$key] = [
+            'ip' => $ans['ip_address'],
+            'waktu' => $ans['submitted_at'],
+            'answers' => []
+        ];
+    }
+    $answerText = $ans['option_text'] ? $ans['option_text'] : $ans['text_answer'];
+    $submissions[$key]['answers'][$ans['question_id']] = $answerText;
+}
+
 // Get settings for logo/theme
 $settings = getSettings($pdo, $adminId);
 
@@ -151,6 +182,44 @@ $settings = getSettings($pdo, $adminId);
                     </div>
                 <?php endforeach; ?>
             <?php endif; ?>
+
+            <h3 class="mb-4 mt-5" style="border-bottom: 2px solid var(--primary-color); display: inline-block; padding-bottom: 0.5rem;">Tabel Seluruh Tanggapan</h3>
+            <div style="background: white; border-radius: 8px; border: 1px solid #e5e7eb; overflow-x: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; min-width: 800px;">
+                    <thead style="background-color: #f9fafb;">
+                        <tr>
+                            <th style="padding: 1rem; border-bottom: 2px solid #e5e7eb; border-right: 1px solid #e5e7eb; white-space: nowrap;">Waktu Submit</th>
+                            <th style="padding: 1rem; border-bottom: 2px solid #e5e7eb; border-right: 1px solid #e5e7eb; white-space: nowrap;">IP Address</th>
+                            <?php foreach ($allQuestions as $q): ?>
+                                <th style="padding: 1rem; border-bottom: 2px solid #e5e7eb; border-right: 1px solid #e5e7eb; min-width: 150px;"><?= htmlspecialchars($q['question_text']) ?></th>
+                            <?php endforeach; ?>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($submissions)): ?>
+                            <tr>
+                                <td colspan="<?= count($allQuestions) + 2 ?>" style="text-align: center; padding: 2rem; color: #6b7280;">Belum ada tanggapan masuk.</td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach ($submissions as $sub): ?>
+                                <tr style="border-bottom: 1px solid #e5e7eb;">
+                                    <td style="padding: 1rem; border-right: 1px solid #e5e7eb; white-space: nowrap; color: #4b5563; font-size: 0.9rem;"><?= htmlspecialchars($sub['waktu']) ?></td>
+                                    <td style="padding: 1rem; border-right: 1px solid #e5e7eb; font-family: monospace; color: #6b7280; font-size: 0.9rem;"><?= htmlspecialchars($sub['ip']) ?></td>
+                                    <?php foreach ($allQuestions as $q): ?>
+                                        <td style="padding: 1rem; border-right: 1px solid #e5e7eb;">
+                                            <?php 
+                                                $ansText = isset($sub['answers'][$q['id']]) ? $sub['answers'][$q['id']] : '-';
+                                                echo nl2br(htmlspecialchars($ansText));
+                                            ?>
+                                        </td>
+                                    <?php endforeach; ?>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+            
         </div>
     </main>
 

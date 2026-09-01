@@ -1,5 +1,4 @@
 <?php
-session_start();
 require_once '../config.php';
 
 if (!isset($_SESSION['admin_id'])) {
@@ -9,6 +8,8 @@ if (!isset($_SESSION['admin_id'])) {
 
 $pollId = $_GET['id'] ?? 0;
 $adminId = $_SESSION['admin_id'];
+$adminRole = $_SESSION['admin_role'] ?? 'admin';
+$settings = getSettings($pdo, $adminId);
 
 // Verify ownership
 $stmt = $pdo->prepare("SELECT * FROM polls WHERE id = ? AND admin_id = ?");
@@ -48,9 +49,45 @@ foreach ($allOptions as $opt) {
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <?php
+        $colors = explode(',', $settings['theme_color']);
+        $primary = $colors[0] ?? '#00984B';
+        $accent = $colors[1] ?? $primary;
+        $dark = $colors[2] ?? $primary;
+    ?>
+    <style>
+        :root {
+            --primary-color: <?= htmlspecialchars($primary) ?>;
+            --accent-color: <?= htmlspecialchars($accent) ?>;
+            --primary-dark: <?= htmlspecialchars($dark) ?>;
+        }
+    </style>
 </head>
 <body id="admin-page">
-    <?php include 'sidebar.php'; ?>
+    <header>
+        <div class="container nav-wrapper">
+            <div class="logo">
+                <?php if ($settings['logo_path'] && $settings['logo_path'] !== 'media/Logo_PD_IPM.png'): ?>
+                    <img src="<?= (strpos($settings['logo_path'], 'http') === 0) ? htmlspecialchars($settings['logo_path']) : '../' . htmlspecialchars($settings['logo_path']) ?>" alt="Logo" style="height: 80px; width: auto; margin-right: 10px;">
+                <?php else: ?>
+                    <i class="fas fa-edit"></i>
+                <?php endif; ?>
+                Orch-Vote<span>Edit Form</span>
+            </div>
+            <nav>
+                <ul>
+                    <?php if ($adminRole !== 'poll_admin'): ?>
+                        <li><a href="index.php">Admin Dashboard</a></li>
+                    <?php endif; ?>
+                    <li><a href="manage_polls" class="active"><i class="fas fa-list"></i> Manage Polls</a></li>
+                    <?php if ($adminRole === 'master'): ?>
+                    <li><a href="manage_admins" style="color: #f59e0b;"><i class="fas fa-users-cog"></i> Manage Admins</a></li>
+                    <?php endif; ?>
+                    <li><a href="logout" style="color: #ef4444;"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
 
     <main class="admin-content">
         <div class="container">
