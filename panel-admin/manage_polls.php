@@ -228,7 +228,7 @@ $settings = getSettings($pdo, $adminId);
                                         </div>
                                         <div style="display: flex; gap: 0.5rem;">
                                             <button onclick="copyPollLink('<?= $poll['slug'] ?>')" class="btn btn-secondary btn-sm" title="Copy Link"><i class="fas fa-link"></i> Copy Link</button>
-                                            <button onclick='openEditPoll(<?= json_encode($poll) ?>, <?= json_encode($options) ?>)' class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Edit</button>
+                                            <a href="edit_poll.php?id=<?= $poll['id'] ?>" class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Edit</a>
                                             <a href="poll_results?id=<?= $poll['id'] ?>" class="btn btn-accent btn-sm"><i class="fas fa-chart-bar"></i> Hasil</a>
                                             <a href="actions.php?action=reset_poll_votes&id=<?= $poll['id'] ?>" class="btn btn-warning btn-sm" onclick="return confirm('Hapus SEMUA suara pada polling ini? Tindakan ini tidak dapat dibatalkan!')"><i class="fas fa-undo"></i> Reset</a>
                                             <a href="actions.php?action=toggle_poll&id=<?= $poll['id'] ?>&state=<?= $poll['is_active'] ? 0 : 1 ?>" class="btn btn-<?= $poll['is_active'] ? 'danger' : 'success' ?> btn-sm">
@@ -338,66 +338,7 @@ $settings = getSettings($pdo, $adminId);
         });
     </script>
     
-    <!-- Edit Poll Modal -->
-    <div id="edit-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center;">
-        <div style="background: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;">
-            <h2 class="mb-4">Edit Polling</h2>
-            <form action="actions.php?action=edit_poll" method="POST">
-                <input type="hidden" name="id" id="edit-poll-id">
-                
-                <div class="input-group">
-                    <label>Judul Polling</label>
-                    <input type="text" name="title" id="edit-poll-title" required>
-                </div>
-
-                <div class="input-group">
-                    <label>Deskripsi (Opsional)</label>
-                    <textarea name="description" id="edit-poll-desc" rows="2"></textarea>
-                </div>
-
-                <div class="input-group">
-                    <label>Pesan Sukses (Opsional)</label>
-                    <textarea name="success_message" id="edit-poll-success" rows="2"></textarea>
-                </div>
-
-                <div class="input-group">
-                    <label>Pilihan Jawaban (Hanya ubah teks)</label>
-                    <div id="edit-options-container">
-                        <!-- Options will be injected here via JS -->
-                    </div>
-                </div>
-
-                <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;">
-                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('edit-modal').style.display='none'">Batal</button>
-                    <button type="submit" class="btn btn-success">Simpan Perubahan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script>
-        function openEditPoll(poll, options) {
-            document.getElementById('edit-poll-id').value = poll.id;
-            document.getElementById('edit-poll-title').value = poll.title;
-            document.getElementById('edit-poll-desc').value = poll.description || '';
-            document.getElementById('edit-poll-success').value = poll.success_message || '';
-            
-            const container = document.getElementById('edit-options-container');
-            container.innerHTML = '';
-            
-            options.forEach(opt => {
-                const div = document.createElement('div');
-                div.style.cssText = 'display: flex; gap: 0.5rem; margin-bottom: 0.5rem;';
-                div.innerHTML = `
-                    <input type="hidden" name="edit_option_ids[]" value="${opt.id}">
-                    <input type="text" name="edit_options[]" value="${opt.option_text}" required style="width: 100%;">
-                `;
-                container.appendChild(div);
-            });
-
-            document.getElementById('edit-modal').style.display = 'flex';
-        }
-
         function copyPollLink(pollSlug) {
             // Use Javascript's window.location to get the real public domain regardless of reverse proxies
             let basePath = window.location.pathname.replace('/panel-admin/manage_polls.php', '').replace('/panel-admin/manage_polls', '');

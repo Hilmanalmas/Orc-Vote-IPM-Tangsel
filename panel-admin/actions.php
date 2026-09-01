@@ -450,81 +450,113 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Edit Poll - Temporarily disabled due to complex structure. Will implement a dedicated page later.
+    // Edit Poll
     if ($action === 'edit_poll') {
-        header("Location: manage_polls?error=Fitur edit form sedang dalam pembaruan.");
-        exit;
-    }
-
-    // Export CSV
-    if ($action === 'export_csv') {
-        $pollId = $_GET['id'] ?? 0;
+        $pollId = $_POST['id'] ?? 0;
+        $title = trim($_POST['title'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $successMsg = trim($_POST['success_message'] ?? 'Terima kasih, tanggapan Anda telah berhasil disimpan!');
+        $questions = $_POST['questions'] ?? [];
         $adminId = $_SESSION['admin_id'];
-        
+
+        if (empty($title) || empty($questions)) {
+            header("Location: edit_poll?id=$pollId&error=Judul dan minimal 1 pertanyaan harus diisi");
+            exit;
+        }
+
         // Verify ownership
-        $stmt = $pdo->prepare("SELECT title FROM polls WHERE id = ? AND admin_id = ?");
+        $stmt = $pdo->prepare("SELECT id FROM polls WHERE id = ? AND admin_id = ?");
         $stmt->execute([$pollId, $adminId]);
-        $poll = $stmt->fetch();
-        
-        if (!$poll) {
-            die("Akses ditolak atau polling tidak ditemukan.");
+        if (!$stmt->fetch()) {
+            header("Location: manage_polls?error=Form tidak ditemukan");
+            exit;
         }
 
-        // Fetch Questions
-        $stmtQ = $pdo->prepare("SELECT id, question_text FROM poll_questions WHERE poll_id = ? ORDER BY order_num ASC, id ASC");
-        $stmtQ->execute([$pollId]);
-        $questions = $stmtQ->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            $pdo->beginTransaction();
 
-        // Fetch Answers Grouped by IP & Date (Approximating a user session)
-        // Since we don't have a submission ID, we'll group by IP and submitted_at (down to the minute)
-        // A better way is just fetching all answers and grouping in PHP.
-        $stmtA = $pdo->prepare("
-            SELECT a.question_id, a.text_answer, a.ip_address, a.submitted_at, o.option_text
-            FROM poll_answers a
-            LEFT JOIN poll_options o ON a.option_id = o.id
-            WHERE a.poll_id = ?
-            ORDER BY a.submitted_at ASC
-        ");
-        $stmtA->execute([$pollId]);
-        $answers = $stmtA->fetchAll(PDO::FETCH_ASSOC);
+            // 1. Update Poll
+            $stmt = $pdo->prepare("UPDATE polls SET title = ?, description = ?, success_message = ? WHERE id = ?");
+            $stmt->execute([$title, $description, $successMsg, $pollId]);
 
-        // Group by submission "session"
-        $submissions = [];
-        foreach ($answers as $ans) {
-            $key = $ans['ip_address'] . '_' . date('Y-m-d H:i', strtotime($ans['submitted_at']));
-            if (!isset($submissions[$key])) {
-                $submissions[$key] = [
-                    'ip' => $ans['ip_address'],
-                    'waktu' => $ans['submitted_at'],
-                    'answers' => []
-                ];
+            // Track IDs to delete later
+            $submittedQuestionIds = [];
+            $submittedOptionIds = [];
+
+            // 2. Process Questions
+            $stmtQUpdate = $pdo->prepare("UPDATE poll_questions SET question_text = ?, question_type = ?, is_required = ?, order_num = ? WHERE id = ? AND poll_id = ?");
+            $stmtQInsert = $pdo->prepare("INSERT INTO poll_questions (poll_id, question_text, question_type, is_required, order_num) VALUES (?, ?, ?, ?, ?)");
+            
+            $stmtOptUpdate = $pdo->prepare("UPDATE poll_options SET option_text = ? WHERE id = ? AND question_id = ?");
+            $stmtOptInsert = $pdo->prepare("INSERT INTO poll_options (poll_id, question_id, option_text) VALUES (?, ?, ?)");
+
+            $order = 1;
+            foreach ($questions as $qIdKey => $q) {
+                $qText = trim($q['text'] ?? '');
+                $qType = $q['type'] ?? 'short_text';
+                $isRequired = isset($q['is_required']) ? 1 : 0;
+                
+                if (empty($qText)) continue;
+
+                $realQuestionId = null;
+
+                if (is_numeric($qIdKey)) {
+                    // Update existing
+                    $stmtQUpdate->execute([$qText, $qType, $isRequired, $order, $qIdKey, $pollId]);
+                    $realQuestionId = $qIdKey;
+                    $submittedQuestionIds[] = $realQuestionId;
+                } else {
+                    // Insert new (e.g. key is 'new_1')
+                    $stmtQInsert->execute([$pollId, $qText, $qType, $isRequired, $order]);
+                    $realQuestionId = $pdo->lastInsertId();
+                    $submittedQuestionIds[] = $realQuestionId;
+                }
+                $order++;
+
+                if ($qType === 'polling' && isset($q['options'])) {
+                    foreach ($q['options'] as $optIdKey => $optTextRaw) {
+                        $optText = trim($optTextRaw);
+                        if (empty($optText)) continue;
+
+                        if (is_numeric($optIdKey)) {
+                            // Update option
+                            $stmtOptUpdate->execute([$optText, $optIdKey, $realQuestionId]);
+                            $submittedOptionIds[] = $optIdKey;
+                        } else {
+                            // Insert option
+                            $stmtOptInsert->execute([$pollId, $realQuestionId, $optText]);
+                            $submittedOptionIds[] = $pdo->lastInsertId();
+                        }
+                    }
+                }
             }
-            $answerText = $ans['option_text'] ? $ans['option_text'] : $ans['text_answer'];
-            $submissions[$key]['answers'][$ans['question_id']] = $answerText;
-        }
 
-        // Output CSV
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename=Hasil_Polling_' . urlencode($poll['title']) . '_' . date('Ymd_His') . '.csv');
-        
-        $output = fopen('php://output', 'w');
-        
-        // Header Row
-        $headerRow = ['Waktu Submit', 'IP Address'];
-        foreach ($questions as $q) {
-            $headerRow[] = $q['question_text'];
-        }
-        fputcsv($output, $headerRow);
-
-        // Data Rows
-        foreach ($submissions as $sub) {
-            $row = [$sub['waktu'], $sub['ip']];
-            foreach ($questions as $q) {
-                $row[] = isset($sub['answers'][$q['id']]) ? $sub['answers'][$q['id']] : '';
+            // 3. Delete Removed Items
+            if (!empty($submittedQuestionIds)) {
+                $placeholders = implode(',', array_fill(0, count($submittedQuestionIds), '?'));
+                $stmtDelQ = $pdo->prepare("DELETE FROM poll_questions WHERE poll_id = ? AND id NOT IN ($placeholders)");
+                $params = array_merge([$pollId], $submittedQuestionIds);
+                $stmtDelQ->execute($params);
+            } else {
+                // If somehow all questions are removed (should be caught by validation but just in case)
+                $pdo->prepare("DELETE FROM poll_questions WHERE poll_id = ?")->execute([$pollId]);
             }
-            fputcsv($output, $row);
+
+            if (!empty($submittedOptionIds)) {
+                $placeholders = implode(',', array_fill(0, count($submittedOptionIds), '?'));
+                $stmtDelOpt = $pdo->prepare("DELETE FROM poll_options WHERE poll_id = ? AND id NOT IN ($placeholders)");
+                $params = array_merge([$pollId], $submittedOptionIds);
+                $stmtDelOpt->execute($params);
+            } else {
+                $pdo->prepare("DELETE FROM poll_options WHERE poll_id = ?")->execute([$pollId]);
+            }
+
+            $pdo->commit();
+            header("Location: manage_polls?msg=Form Polling berhasil diperbarui");
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            header("Location: edit_poll?id=$pollId&error=Gagal memperbarui form: " . urlencode($e->getMessage()));
         }
-        fclose($output);
         exit;
     }
 }
@@ -586,11 +618,81 @@ if ($action === 'reset_poll_votes') {
     $stmt = $pdo->prepare("SELECT id FROM polls WHERE id = ? AND admin_id = ?");
     $stmt->execute([$id, $_SESSION['admin_id']]);
     if ($stmt->fetch()) {
-        $stmtDel = $pdo->prepare("DELETE FROM poll_votes WHERE poll_id = ?");
+        $stmtDel = $pdo->prepare("DELETE FROM poll_answers WHERE poll_id = ?");
         $stmtDel->execute([$id]);
-        header("Location: manage_polls?msg=Semua suara pada polling berhasil dihapus");
+        header("Location: manage_polls?msg=Semua jawaban pada form berhasil dihapus");
     } else {
-        header("Location: manage_polls?error=Polling tidak ditemukan");
+        header("Location: manage_polls?error=Form tidak ditemukan");
     }
+    exit;
+}
+
+// Export CSV
+if ($action === 'export_csv') {
+    $pollId = $_GET['id'] ?? 0;
+    $adminId = $_SESSION['admin_id'];
+    
+    // Verify ownership
+    $stmt = $pdo->prepare("SELECT title FROM polls WHERE id = ? AND admin_id = ?");
+    $stmt->execute([$pollId, $adminId]);
+    $poll = $stmt->fetch();
+    
+    if (!$poll) {
+        die("Akses ditolak atau form tidak ditemukan.");
+    }
+
+    // Fetch Questions
+    $stmtQ = $pdo->prepare("SELECT id, question_text FROM poll_questions WHERE poll_id = ? ORDER BY order_num ASC, id ASC");
+    $stmtQ->execute([$pollId]);
+    $questions = $stmtQ->fetchAll(PDO::FETCH_ASSOC);
+
+    // Fetch Answers Grouped by IP & Date (Approximating a user session)
+    $stmtA = $pdo->prepare("
+        SELECT a.question_id, a.text_answer, a.ip_address, a.submitted_at, o.option_text
+        FROM poll_answers a
+        LEFT JOIN poll_options o ON a.option_id = o.id
+        WHERE a.poll_id = ?
+        ORDER BY a.submitted_at ASC
+    ");
+    $stmtA->execute([$pollId]);
+    $answers = $stmtA->fetchAll(PDO::FETCH_ASSOC);
+
+    // Group by submission "session"
+    $submissions = [];
+    foreach ($answers as $ans) {
+        $key = $ans['ip_address'] . '_' . date('Y-m-d H:i', strtotime($ans['submitted_at']));
+        if (!isset($submissions[$key])) {
+            $submissions[$key] = [
+                'ip' => $ans['ip_address'],
+                'waktu' => $ans['submitted_at'],
+                'answers' => []
+            ];
+        }
+        $answerText = $ans['option_text'] ? $ans['option_text'] : $ans['text_answer'];
+        $submissions[$key]['answers'][$ans['question_id']] = $answerText;
+    }
+
+    // Output CSV
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename=Hasil_Polling_' . urlencode($poll['title']) . '_' . date('Ymd_His') . '.csv');
+    
+    $output = fopen('php://output', 'w');
+    
+    // Header Row
+    $headerRow = ['Waktu Submit', 'IP Address'];
+    foreach ($questions as $q) {
+        $headerRow[] = $q['question_text'];
+    }
+    fputcsv($output, $headerRow);
+
+    // Data Rows
+    foreach ($submissions as $sub) {
+        $row = [$sub['waktu'], $sub['ip']];
+        foreach ($questions as $q) {
+            $row[] = isset($sub['answers'][$q['id']]) ? $sub['answers'][$q['id']] : '';
+        }
+        fputcsv($output, $row);
+    }
+    fclose($output);
     exit;
 }
